@@ -1,13 +1,14 @@
 [gd_scene format=3 uid="uid://daufekjr7qd8t"]
 
-[ext_resource type="Script" uid="uid://ul2vh64knxlo" path="res://Exit.cs" id="1_pskrv"]
-[ext_resource type="Texture2D" uid="uid://kqj5m05ll333" path="res://Asset/Atlas.png" id="1_vrd06"]
-[ext_resource type="Script" uid="uid://cbpl78ub0cm3f" path="res://WorldRenderer.cs" id="3_58igv"]
-[ext_resource type="Script" uid="uid://dv7oy2y1nltnl" path="res://Camera.cs" id="5_58igv"]
-[ext_resource type="Script" uid="uid://c4oeqxn2gnpru" path="res://FpsCounter.cs" id="5_pusve"]
+[ext_resource type="Script" uid="uid://ul2vh64knxlo" path="res://Objects/GamePlay/Exit.cs" id="1_q4i2k"]
+[ext_resource type="Texture2D" uid="uid://kqj5m05ll333" path="res://Asset/Atlas.png" id="2_jrgi8"]
+[ext_resource type="Script" uid="uid://cbpl78ub0cm3f" path="res://Objects/World/WorldRenderer.cs" id="3_27352"]
+[ext_resource type="Script" uid="uid://c10glhw1qqnpd" path="res://Objects/Player/CameraPlayer.cs" id="4_q4i2k"]
+[ext_resource type="PackedScene" uid="uid://bldw34pc1oqmx" path="res://Objects/Player/Player.tscn" id="5_q4i2k"]
+[ext_resource type="Script" uid="uid://c4oeqxn2gnpru" path="res://Objects/FPS/FpsCounter.cs" id="6_4i1n7"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_k2aq1"]
-texture = ExtResource("1_vrd06")
+texture = ExtResource("2_jrgi8")
 0:0/0 = 0
 1:0/0 = 0
 1:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
@@ -58,6 +59,7 @@ texture = ExtResource("1_vrd06")
 8:2/0 = 0
 8:3/0 = 0
 9:3/0 = 0
+9:3/0/physics_layer_0/polygon_0/points = PackedVector2Array(-8, -8, -8, 8, 8, 8, 8, -8)
 9:2/0 = 0
 2:0/0 = 0
 2:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
@@ -70,22 +72,27 @@ sources/0 = SubResource("TileSetAtlasSource_k2aq1")
 
 [node name="Gameplay" type="Node2D" unique_id=843746850]
 position = Vector2(-8, 0)
-script = ExtResource("1_pskrv")
+script = ExtResource("1_q4i2k")
 
-[node name="TileMapLayer" type="TileMapLayer" parent="." unique_id=1167110597]
+[node name="World" type="TileMapLayer" parent="." unique_id=1167110597 node_paths=PackedStringArray("_camera", "_player")]
 tile_set = SubResource("TileSet_k2aq1")
-script = ExtResource("3_58igv")
+script = ExtResource("3_27352")
+_camera = NodePath("../Camera2D")
+_player = NodePath("../Player")
 
 [node name="Camera2D" type="Camera2D" parent="." unique_id=1042839345]
 z_index = 1
 position = Vector2(0, 320)
+zoom = Vector2(3, 3)
 limit_enabled = false
-script = ExtResource("5_58igv")
-_speed = 1500.0
+script = ExtResource("4_q4i2k")
+
+[node name="Player" parent="." unique_id=574582331 node_paths=PackedStringArray("worldRenderer") instance=ExtResource("5_q4i2k")]
+worldRenderer = NodePath("../World")
 
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=2139021385]
 
-[node name="Label" type="Label" parent="CanvasLayer" unique_id=972181974]
+[node name="FPS" type="Label" parent="CanvasLayer" unique_id=972181974 node_paths=PackedStringArray("_player")]
 modulate = Color(0, 0, 0, 1)
 offset_left = -40.0
 offset_top = 328.0
@@ -93,4 +100,5 @@ offset_right = 112.0
 offset_bottom = 360.0
 theme_override_font_sizes/font_size = 30
 label_settings = SubResource("LabelSettings_58igv")
-script = ExtResource("5_pusve")
+script = ExtResource("6_4i1n7")
+_player = NodePath("../../Player")

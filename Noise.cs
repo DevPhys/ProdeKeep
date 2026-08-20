@@ -12,8 +12,23 @@ public class Noise
 		int xLeft = (int)Math.Floor(x);
 		int xRight = xLeft + 1;
 		double t = x - xLeft;
-		return Lerp((p[Math.Abs(xLeft) % 256] % 2 == 0 ? -1.0 : 1.0) * t,
-					(p[Math.Abs(xRight) % 256] % 2 == 0 ? -1.0 : 1.0) * (t - 1.0), Fade(t)) * 2.0;
+
+		// Безопасное получение абсолютного значения
+		int leftIndex = GetSafeIndex(xLeft);
+		int rightIndex = GetSafeIndex(xRight);
+
+		return Lerp((p[leftIndex] % 2 == 0 ? -1.0 : 1.0) * t,
+					(p[rightIndex] % 2 == 0 ? -1.0 : 1.0) * (t - 1.0), Fade(t)) * 2.0;
+	}
+
+	private int GetSafeIndex(int value)
+	{
+		// Обработка int.MinValue
+		if (value == int.MinValue)
+			return 0;
+
+		// Безопасное взятие модуля
+		return Math.Abs(value) % 256;
 	}
 	public double PerlinNoise2D(double x, double y, int[] p)
 	{

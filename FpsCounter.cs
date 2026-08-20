@@ -3,6 +3,7 @@ using Godot;
 public partial class FpsCounter : Label
 {
 	private float _fps;
+	[Export] public CharacterBody2D _player;
 	
 	public override void _Ready()
 	{
@@ -12,10 +13,11 @@ public partial class FpsCounter : Label
 	
 	public override void _Process(double delta)
 	{
-		// Вычисляем FPS
-		_fps = 1.0f / (float)delta;
+		_fps = 1.0f / (float)delta;  // Вычисляем FPS
 		
-		// Обновляем текст
-		Text = $"FPS: {_fps:F0}";
+		float positionPlayerX = _player.GlobalPosition.X / 16;
+		float positionPlayerY = _player.GlobalPosition.Y / 16;
+		
+		Text = $"FPS: {_fps:F0}\nPosition X: {positionPlayerX}\nPosition Y: {positionPlayerY}";  // Обновляем текст
 	}
 }

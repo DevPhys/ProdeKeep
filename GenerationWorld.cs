@@ -54,8 +54,6 @@ class Generation
 	int numOctave1D = 10; // Количество октав 1д шума
 
 	public static ConcurrentDictionary<ChunkKey, byte[]> worldMemory = new ConcurrentDictionary<ChunkKey, byte[]>();  // Ключ — (ID мира, Индекс чанка), Значение — массив байт этого чанка
-	private ChunkKey keyChunck;  // Ключ чанка
-	private byte[] chunkCurrent;  // Массив байтов конкрентного чанка
 
 	// Списки шаблонов структур деревьев
 	private static List<byte> listTreesOaks = new List<byte>();  // Дуб
@@ -128,6 +126,8 @@ class Generation
 	}
 	public ConcurrentDictionary<ChunkKey, byte[]> CreationWorld()
 	{
+		var watch = System.Diagnostics.Stopwatch.StartNew();
+		
 		// Создаем мир из 0 и 1
 		GenerationWorld();
 
@@ -136,132 +136,82 @@ class Generation
 
 		int numsChunk = worldSizeBlocks / chunkHeightX;  // Находим количество чанков
 
-		double[] temperatureMap = GenerateNoiseMap(Seed: SeedMap);  // Создаем карту температуры
 		double[] waterNoise = GenerateNoiseMap(Seed: SeedMap * 5);  // Создаем карту вод
 		double[] carbonicNoise = GenerateNoiseMap(Seed: SeedMap + 100);  // Создаем карту высот появления угольной руды
 		double[] ironNoise = GenerateNoiseMap(Seed: SeedMap + 200);  // Создаем карту появления железной руды
 		double[] carbonicNoiseX = GenerateNoiseMap(Seed: SeedMap - 100);  // Создаем карту по Х появления угольной руды
 
-		// Циклом перерисовываем мир, добавляя траву, руды, структуры и т.д.
-		for (int i = 0; i < numsChunk; i++)
-		{
-			// Берем ключ чанка
-			keyChunck = new ChunkKey(0, i);
+		int[] permOaks = Perm(Seed: 10);
+		int[] permCacti = Perm(Seed: 11);
+		int[] permSpruce = Perm(Seed: 12);
 
-			// Проверка на пустой чанк
-			if (!worldMemory.TryGetValue(keyChunck, out byte[]? chunk))
+		// Циклом перерисовываем мир, добавляя траву, руды, структуры и т.д.
+		Parallel.For(0, numsChunk, i =>
+		{
+			// Локальные переменные для каждого потока
+			ChunkKey localKey = new ChunkKey(0, i);
+
+			if (!worldMemory.TryGetValue(localKey, out byte[]? chunk))
 			{
-				GD.Print($"Чанк {i} пуст или не обнаружен"); // Выводим в консоль проблему
-				continue;
+				GD.Print($"Чанк {i} пуст или не обнаружен");
+				return;
 			}
 
-			// Обновляем данный чанк, чтобы в дальнейшем работать с ним
-			chunkCurrent = chunk;
+			// Работаем с локальной копией
+			byte[] localChunk = chunk;
 
-			GenerationBlocks(temperatureMap, i);  // Красим рельеф
-			GenerationWater(waterNoise, i);  // Создаем озера
-			GenerationWaterSand(i);  // Создаем речной песок на дне озер
+			GenerationWater(waterNoise, i, (localKey, localChunk));  // Создаем озера
+			GenerationWaterSand(i, (localKey, localChunk));  // Создаем речной песок на дне озер
 
 			GenerationOre(carbonicNoise, p, i,
 				Frequency: (0.18, 0.68),
 				IDblock: (byte)BlockId.CarbonicBlock,
-				Limit: (LimitCarbonic.Upper, LimitCarbonic.Lower));  // Создаем уголь
+				Limit: (LimitCarbonic.Upper, LimitCarbonic.Lower), 
+				Main: (localKey, localChunk));  // Создаем уголь
 			GenerationOre(ironNoise, p, i,
 				Frequency: (0.20, 0.78),
 				IDblock: (byte)BlockId.IronBlock,
-				Limit: (LimitIron.Upper, LimitIron.Lower));  // Создаем железо
+				Limit: (LimitIron.Upper, LimitIron.Lower),
+				Main: (localKey, localChunk));  // Создаем железо
 
 			GenerationStructures(Index: i, Step: 5,
 				AllowedBlocks: (
-					[(byte)BlockId.Air, (byte)BlockId.Grass, (byte)BlockId.Earth], 
-					[(byte)BlockId.Air], 
+					[(byte)BlockId.Air, (byte)BlockId.Grass, (byte)BlockId.Earth],
+					[(byte)BlockId.Air],
 					[(byte)BlockId.Grass, (byte)BlockId.Earth]),
 				SizeStructure: (2, 5),
 				ListStructure: listTreesOaks,
-				Permutation: Perm(Seed: 10));  // Размещаем дубы
+				Permutation: permOaks,
+				Main: (localKey, localChunk));  // Размещаем дубы
 			GenerationStructures(Index: i, Step: 5,
 				AllowedBlocks: (
-					[(byte)BlockId.Air], 
-					[(byte)BlockId.Air], 
+					[(byte)BlockId.Air],
+					[(byte)BlockId.Air],
 					[(byte)BlockId.Sand]),
 				SizeStructure: (2, 5),
 				ListStructure: listTreesСacti,
-				Permutation: Perm(Seed: 11));  // Размещаем кактусы
+				Permutation: permCacti,
+				Main: (localKey, localChunk));  // Размещаем кактусы
 			GenerationStructures(Index: i, Step: 7,
 				AllowedBlocks: (
-					[(byte)BlockId.Air, (byte)BlockId.Snow], 
-					[(byte)BlockId.Air], 
+					[(byte)BlockId.Air, (byte)BlockId.Snow],
+					[(byte)BlockId.Air],
 					[(byte)BlockId.Snow, (byte)BlockId.Earth]),
 				SizeStructure: (4, 7),
 				ListStructure: listTreesSpruce,
-				Permutation: Perm(Seed: 12));  // Размещаем ели
-		}
-
+				Permutation: permSpruce,
+				Main: (localKey, localChunk));  // Размещаем ели
+		});
+		
+		watch.Stop();
+		GD.Print($"\nГотово! Время полной генерации: {watch.ElapsedMilliseconds / 1000.0} секунд");
+		
 		// Возвращаем весь мир
 		return worldMemory;
 	}
 
 
-	private void GenerationBlocks(double[] TemperatureMap, int Index)
-	{
-		int chunkOffsetX = Index * chunkHeightX;
-
-		// Проходимся по всей длине
-		for (int x = 0; x < chunkHeightX; x++)
-		{
-			// Проходимся по столбцу
-			for (int y = 1; y < worldHeightY - 1; y++)
-			{
-				int currentIndex = x * worldHeightY + y;  // Определяем индекс блока
-				int belowIndex = x * worldHeightY + (y + 1);  // Определяем индекс блока под текущим блоком
-
-				// Проверяем, если сейчас воздух и есть ли под этим воздухлм камень
-				if (chunkCurrent[currentIndex] == (byte)BlockId.Air && chunkCurrent[belowIndex] == (byte)BlockId.Stone)
-				{
-					int worldX = chunkOffsetX + x;  // Вычисляем индекс для массива карты температуры
-					double temperature = TemperatureMap[worldX];  // Достаем значение температуры данного блока
-
-					// Если температура больше или равно 0.9, то тут пустыня
-					if (temperature >= 0.8)
-					{
-						chunkCurrent[currentIndex] = (byte)BlockId.Sand;
-					}
-					// Другое: обычные равнины
-					else if (temperature <= 0.2)
-					{
-						chunkCurrent[currentIndex] = (byte)BlockId.Snow;
-					}
-					else
-					{
-						chunkCurrent[currentIndex] = (byte)BlockId.Grass;
-					}
-
-					// Циклом меняем блоки под травой на землю
-					for (int d = 1; d <= layerThicknessEarth; d++)
-					{
-						int dirtIndex = x * worldHeightY + (y + d);
-						if (dirtIndex < chunkCurrent.Length && chunkCurrent[dirtIndex] == (byte)BlockId.Stone)
-						{
-							if (temperature >= 0.8)
-							{
-								chunkCurrent[dirtIndex] = (byte)BlockId.Sand;
-							}
-							// Другое: обычные равнины
-							else
-							{
-								chunkCurrent[dirtIndex] = (byte)BlockId.Earth;
-							}
-						}
-					}
-					break;  // Выходим из цикла
-				}
-			}
-		}
-
-		// Обновляем чанк под конец 
-		worldMemory[keyChunck] = chunkCurrent;
-	}
-	private void GenerationWater(double[] WaterNoise, int Index)
+	private void GenerationWater(double[] WaterNoise, int Index, (ChunkKey Key, byte[] Chunk) Main)
 	{
 		int chunkOffsetX = Index * chunkHeightX;
 
@@ -277,9 +227,9 @@ class Generation
 				int index = x * worldHeightY + y;  // Вычисляем индекс блока
 
 				// Если воздух — заливаем водой
-				if (chunkCurrent[index] == (byte)BlockId.Air)
+				if (Main.Chunk[index] == (byte)BlockId.Air)
 				{
-					chunkCurrent[index] = (byte)BlockId.Water; // вода
+					Main.Chunk[index] = (byte)BlockId.Water; // вода
 				}
 			}
 		}
@@ -295,16 +245,16 @@ class Generation
 			{
 				int index = x * worldHeightY + y;  // Вычисляем индекс блока
 
-				if (chunkCurrent[index] == (byte)BlockId.Water)
+				if (Main.Chunk[index] == (byte)BlockId.Water)
 				{
 					if (x - 1 >= 0 && x + 1 < chunkHeightX && y - 1 >= 0 && y + 1 < worldHeightY)
 					{
-						if (chunkCurrent[(x + 1) * worldHeightY + y] != (byte)BlockId.Water && 
-							chunkCurrent[(x - 1) * worldHeightY + y] != (byte)BlockId.Water && 
-							chunkCurrent[x * worldHeightY + (y + 1)] != (byte)BlockId.Water && 
-							chunkCurrent[x * worldHeightY + (y - 1)] != (byte)BlockId.Water)
+						if (Main.Chunk[(x + 1) * worldHeightY + y] != (byte)BlockId.Water &&
+							Main.Chunk[(x - 1) * worldHeightY + y] != (byte)BlockId.Water &&
+							Main.Chunk[x * worldHeightY + (y + 1)] != (byte)BlockId.Water &&
+							Main.Chunk[x * worldHeightY + (y - 1)] != (byte)BlockId.Water)
 						{
-							chunkCurrent[index] = (byte)BlockId.Air;
+							Main.Chunk[index] = (byte)BlockId.Air;
 						}
 					}
 				}
@@ -312,9 +262,9 @@ class Generation
 		}
 
 		// Обновляем чанк
-		worldMemory[keyChunck] = chunkCurrent;
+		worldMemory[Main.Key] = Main.Chunk;
 	}
-	private void GenerationWaterSand(int Index)
+	private void GenerationWaterSand(int Index, (ChunkKey Key, byte[] Chunk) Main)
 	{
 		// Проходим по длине чанка
 		for (int x = 0; x < chunkHeightX; x++)
@@ -326,20 +276,20 @@ class Generation
 				int belowIndex = x * worldHeightY + (y + 1);  // // Вычисляем индекс блока ниже
 
 				// Проверяем
-				if (chunkCurrent[currentIndex] == (byte)BlockId.Water && 
-					(chunkCurrent[belowIndex] == (byte)BlockId.Grass || chunkCurrent[belowIndex] == (byte)BlockId.Snow))
+				if (Main.Chunk[currentIndex] == (byte)BlockId.Water && 
+					Main.Chunk[belowIndex] != (byte)BlockId.Water)
 				{
 					// Заменяем траву на песок (нижний блок)
-					chunkCurrent[belowIndex] = (byte)BlockId.Sand;
+					Main.Chunk[belowIndex] = (byte)BlockId.Sand;
 				}
 			}
 		}
 
 		// Обновляем чанк
-		worldMemory[keyChunck] = chunkCurrent;
+		worldMemory[Main.Key] = Main.Chunk;
 	}
 
-	private void GenerationOre(double[] CarbonicNoise, int[] Permutation, int Index, int IDblock, (double f, double p) Frequency, (int Upper, int Lower) Limit)
+	private void GenerationOre(double[] CarbonicNoise, int[] Permutation, int Index, int IDblock, (double f, double p) Frequency, (int Upper, int Lower) Limit, (ChunkKey Key, byte[] Chunk) Main)
 	{
 		int chunkOffsetX = Index * chunkHeightX;
 
@@ -357,21 +307,21 @@ class Generation
 			{
 				int index = x * worldHeightY + y;
 
-				if (chunkCurrent[index] == (byte)BlockId.Stone)
+				if (Main.Chunk[index] == (byte)BlockId.Stone)
 				{
 					double carbonicNoiseHere = noise.PerlinNoise2D(worldX * Frequency.f, y * Frequency.f, Permutation);
 
 					if (carbonicNoiseHere >= Frequency.p)
-						chunkCurrent[index] = (byte)IDblock;
+						Main.Chunk[index] = (byte)IDblock;
 				}
 			}
 		}
 
-		worldMemory[keyChunck] = chunkCurrent;
+		worldMemory[Main.Key] = Main.Chunk;
 	}
 	private void GenerationStructures(int Index, int Step,
 	List<byte> ListStructure, (List<byte> LeftAndRight, List<byte> Top, List<byte> Bottom) AllowedBlocks,
-	(int W, int H) SizeStructure, int[] Permutation)
+	(int W, int H) SizeStructure, int[] Permutation, (ChunkKey Key, byte[] Chunk) Main)
 	{
 		int chunkOffsetX = Index * chunkHeightX;
 
@@ -384,8 +334,8 @@ class Generation
 				int currentIndex = x * worldHeightY + y;  // Определяем индекс блока
 				int belowIndex = x * worldHeightY + (y - 1);  // Определяем индекс блока над текущим блоком
 
-				if (AllowedBlocks.Bottom.Contains(chunkCurrent[currentIndex]) &&
-					AllowedBlocks.Top.Contains(chunkCurrent[belowIndex]))
+				if (AllowedBlocks.Bottom.Contains(Main.Chunk[currentIndex]) &&
+					AllowedBlocks.Top.Contains(Main.Chunk[belowIndex]))
 				{
 					double noiseNum = noise.PerlinNoise1D((chunkOffsetX + x) * 0.1, Permutation);
 					if (noiseNum >= 0.02)
@@ -409,7 +359,7 @@ class Generation
 								}
 
 								int checkIndex = checkX * worldHeightY + checkY;
-								if (checkIndex >= chunkCurrent.Length || !AllowedBlocks.LeftAndRight.Contains(chunkCurrent[checkIndex]))
+								if (checkIndex >= Main.Chunk.Length || !AllowedBlocks.LeftAndRight.Contains(Main.Chunk[checkIndex]))
 								{
 									canBuild = false;
 									break;
@@ -433,12 +383,12 @@ class Generation
 									int placeY = y - d;
 									int placeIndex = placeX * worldHeightY + placeY;
 
-									if (placeIndex >= 0 && placeIndex < chunkCurrent.Length)
+									if (placeIndex >= 0 && placeIndex < Main.Chunk.Length)
 									{
 										int listIndex = columnStartIndex + (d - 1);
 
 										if (ListStructure[listIndex] != (byte)BlockId.Air)
-											chunkCurrent[placeIndex] = ListStructure[listIndex];
+											Main.Chunk[placeIndex] = ListStructure[listIndex];
 									}
 								}
 							}
@@ -448,17 +398,17 @@ class Generation
 				}
 			}
 		}
-		worldMemory[keyChunck] = chunkCurrent;
+		worldMemory[Main.Key] = Main.Chunk;
 	}
 
 	private void GenerationWorld()
 	{
 		var watch = System.Diagnostics.Stopwatch.StartNew();
-		GD.Print($"Параллельная генерация {numWorld} миров в оперативную память...");
 
 		int seedMap = NumberFromSeed(BasicNumber: 33, Factor: 7, Renge: (10, 99));
 		double[] caveMap = GenerateNoiseMap(seedMap);
 		double[] caveMapLower = GenerateNoiseMap(seedMap + 100);
+		double[] temperatureMap = GenerateNoiseMap(Seed: seedMap * 100);  // Создаем карту температуры
 
 		Parallel.For(0, numWorld, worldId =>
 		{
@@ -468,57 +418,12 @@ class Generation
 			if (seedModifier <= 0.02) seedModifier = 0.03;
 			if (seedModifier >= 0.06) seedModifier = 0.05;
 
-			// Перемешиваем таблицу для Perlin
-			int[] pTable = Enumerable.Range(0, 256).ToArray();
-			for (int i = 255; i > 0; i--)
-			{
-				int j = rand.Next(i + 1);
-				int temp = pTable[i];
-				pTable[i] = pTable[j];
-				pTable[j] = temp;
-			}
-			int[] p = new int[1024];
-			for (int i = 0; i < 256; i++)
-				p[i] = p[i + 256] = p[i + 512] = p[i + 768] = pTable[i];
-
 			double offsetX = rand.NextDouble() * 1000.0;
 			double offsetY = rand.NextDouble() * 1000.0;
 			double worldOffset = worldId * 5000.0;
 
-			// Генерация высот
-			int[] worldHeightsBlocks = new int[worldSizeBlocks];
-
-			for (int x = 0; x < worldSizeBlocks; x++)
-			{
-				double totalNoise = 0.0;
-				double totalAmplitude = 0.0;
-
-				double frequency = 0.008;
-				double amplitude = 1.0;
-
-				// Скрещиваем октавы
-				for (int octave = 0; octave < numOctave1D; octave++)
-				{
-					double sampleX = (x * frequency) + worldOffset;
-					double noiseVal = noise.PerlinNoise1D(sampleX, p);
-
-					totalNoise += noiseVal * amplitude;
-					totalAmplitude += amplitude;
-
-					frequency *= 2.0;
-					amplitude *= 0.5;
-				}
-
-				// Нормализация
-				double finalNoise = totalNoise / totalAmplitude;
-
-				// Преобразование в высоту
-				int heightInBlocks = (int)(midBlocksH + (finalNoise * amplitudeBlocks));
-				if (heightInBlocks < lowerLimitBlocks) heightInBlocks = lowerLimitBlocks;
-				if (heightInBlocks > upperLimitBlocks) heightInBlocks = upperLimitBlocks;
-
-				worldHeightsBlocks[x] = heightInBlocks;
-			}
+			int[] p = GenerateNoiseMap2(rand);
+			int[] worldHeightsBlocks = GenerateH((worldOffset, p));
 
 			// Заполнение мира байтами
 			byte[] entireWorldBytes = new byte[worldSizeBlocks * worldHeightY];
@@ -537,6 +442,10 @@ class Generation
 
 					if (y < surfaceY)
 						entireWorldBytes[blockIdx] = 0;
+					else if (y <= surfaceY + layerThicknessEarth)  // Пропускаем слой земли
+					{
+						// Ничего не делаем — уже покрашено
+					}
 					else if (y <= caveStartY)
 						entireWorldBytes[blockIdx] = 1;
 					else if (y >= caveStartY2)
@@ -555,6 +464,35 @@ class Generation
 						else
 							entireWorldBytes[blockIdx] = 1;
 					}
+
+					if (y == surfaceY)
+					{
+						double temperature = temperatureMap[x];
+
+						if (temperature >= 0.8)
+							entireWorldBytes[blockIdx] = (byte)BlockId.Sand;
+						else if (temperature <= 0.2)
+							entireWorldBytes[blockIdx] = (byte)BlockId.Snow;
+						else
+							entireWorldBytes[blockIdx] = (byte)BlockId.Grass;
+
+
+						for (int i = 1; i <= layerThicknessEarth; i++)
+						{
+							int dirtIndex = xOffset + (y + i);
+
+							if (temperature >= 0.8)
+							{
+								entireWorldBytes[dirtIndex] = (byte)BlockId.Sand;
+							}
+							else
+							{
+								entireWorldBytes[dirtIndex] = (byte)BlockId.Earth;
+							}
+						}
+					}
+
+					//entireWorldBytes = GenerationBlocks(temperatureMap, Indexs: (blockIdx, xOffset + y + 1), entireWorldBytes, Pos: (x, y));
 				}
 			});
 
@@ -571,17 +509,10 @@ class Generation
 				ChunkKey key = new ChunkKey(worldId, chunkIdx);
 				worldMemory.TryAdd(key, binaryChunk);
 			});
-
-			GD.Print($"Мир {worldId} успешно создан в памяти");
 		});
 
 		watch.Stop();
-		GD.Print($"\nГотово! Все миры сгенерированы в ОЗУ за {watch.ElapsedMilliseconds / 1000.0} секунд");
-
-		PrintChunkToConsole(worldId: 0, chunkIdx: 4000); // Выводим 1 чанк в консоль для визуализации
-		PrintChunkToConsole(worldId: 0, chunkIdx: 4001); // Выводим 1 чанк в консоль для визуализации
-		PrintChunkToConsole(worldId: 0, chunkIdx: 4002); // Выводим 1 чанк в консоль для визуализации
-		PrintWorldSizeInRAM();  // Выводим информацию о памяти
+		GD.Print($"\nГотово! Время генериции №1: {watch.ElapsedMilliseconds / 1000.0} секунд");
 	}
 
 	private static int NumberFromSeed((int MinNum, int MaxNum) Renge, int BasicNumber = 0, int Factor = 1)
@@ -687,8 +618,6 @@ class Generation
 		GD.Print($"В мегабайтах: {megabytes:F2} MB");
 		GD.Print($"Всего чанков в памяти: {worldMemory.Count}");
 		GD.Print("=========================================");
-		GD.Print("Размеры мира:");
-		GD.Print($"");
 	}
 
 	private double[] GenerateNoiseMap(int Seed = 42)
@@ -706,5 +635,62 @@ class Generation
 		}
 
 		return noiseMap;
+	}
+
+	public int[] GenerateNoiseMap2(Random rand)
+	{
+		// Перемешиваем таблицу для Perlin
+		int[] pTable = Enumerable.Range(0, 256).ToArray();
+		for (int i = 255; i > 0; i--)
+		{
+			int j = rand.Next(i + 1);
+			int temp = pTable[i];
+			pTable[i] = pTable[j];
+			pTable[j] = temp;
+		}
+		int[] p = new int[1024];
+		for (int i = 0; i < 256; i++)
+			p[i] = p[i + 256] = p[i + 512] = p[i + 768] = pTable[i];
+
+		return p;
+	}
+	public int[] GenerateH((double WorldOffset, int[] P) Main)
+	{
+		// Генерация высот
+		int[] worldHeightsBlocks = new int[worldSizeBlocks];
+
+		for (int x = 0; x < worldSizeBlocks; x++)
+		{
+			double totalNoise = 0.0;
+			double totalAmplitude = 0.0;
+
+			double frequency = 0.008;
+			double amplitude = 1.0;
+
+			// Скрещиваем октавы
+			for (int octave = 0; octave < numOctave1D; octave++)
+			{
+				double sampleX = (x * frequency) + Main.WorldOffset;
+				double noiseVal = noise.PerlinNoise1D(sampleX, Main.P);
+
+				totalNoise += noiseVal * amplitude;
+				totalAmplitude += amplitude;
+
+				frequency *= 2.0;
+				amplitude *= 0.5;
+			}
+
+			// Нормализация
+			double finalNoise = totalNoise / totalAmplitude;
+
+			// Преобразование в высоту
+			int heightInBlocks = (int)(midBlocksH + (finalNoise * amplitudeBlocks));
+			if (heightInBlocks < lowerLimitBlocks) heightInBlocks = lowerLimitBlocks;
+			if (heightInBlocks > upperLimitBlocks) heightInBlocks = upperLimitBlocks;
+
+			worldHeightsBlocks[x] = heightInBlocks;
+		}
+
+		return worldHeightsBlocks;
 	}
 }

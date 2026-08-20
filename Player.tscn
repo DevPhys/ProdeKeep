@@ -1,0 +1,70 @@
+[gd_scene format=3 uid="uid://bldw34pc1oqmx"]
+
+[ext_resource type="Script" uid="uid://kfbf0uhc2lwd" path="res://Objects/Player/Player.cs" id="1_nd6ml"]
+[ext_resource type="Texture2D" uid="uid://b1yi4fmxdxclc" path="res://Asset/Рука стива.png" id="2_y01d7"]
+[ext_resource type="Texture2D" uid="uid://dv2c2na6m1ijq" path="res://Asset/Нога стива.png" id="3_7t0p5"]
+[ext_resource type="Texture2D" uid="uid://c3un1rw02wull" path="res://Asset/Туловище стива.png" id="4_ebgc0"]
+[ext_resource type="Texture2D" uid="uid://d167ng50vee05" path="res://Asset/Голова стива.png" id="5_1ggq4"]
+[ext_resource type="Texture2D" uid="uid://dv8sr1b52hybn" path="res://Asset/Крест курсора мыши.png" id="6_q10m3"]
+[ext_resource type="Script" uid="uid://blapir1mewu28" path="res://Objects/Player/Cross.cs" id="7_ufaat"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_5twf5"]
+size = Vector2(8, 32.25)
+
+[node name="Player" type="CharacterBody2D" unique_id=574582331]
+script = ExtResource("1_nd6ml")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=879407446]
+position = Vector2(4, 15.875)
+scale = Vector2(1, 0.79)
+shape = SubResource("RectangleShape2D_5twf5")
+
+[node name="hand1" type="Marker2D" parent="." unique_id=710450231]
+position = Vector2(4, 8)
+
+[node name="hand1" type="Sprite2D" parent="hand1" unique_id=612868763]
+position = Vector2(0, 5)
+texture = ExtResource("2_y01d7")
+
+[node name="leg2" type="Marker2D" parent="." unique_id=962658180]
+position = Vector2(4, 18)
+
+[node name="leg2" type="Sprite2D" parent="leg2" unique_id=183933262]
+position = Vector2(0, 5)
+scale = Vector2(1, 0.7)
+texture = ExtResource("3_7t0p5")
+
+[node name="Torso" type="Marker2D" parent="." unique_id=161719182]
+position = Vector2(4, 13)
+
+[node name="Torso" type="Sprite2D" parent="Torso" unique_id=1001345440]
+scale = Vector2(1, 1.25)
+texture = ExtResource("4_ebgc0")
+
+[node name="Head" type="Marker2D" parent="." unique_id=1006710207]
+position = Vector2(4, 8)
+
+[node name="Head" type="Sprite2D" parent="Head" unique_id=774001510]
+position = Vector2(0, -4)
+texture = ExtResource("5_1ggq4")
+
+[node name="leg1" type="Marker2D" parent="." unique_id=540690218]
+position = Vector2(4, 18)
+
+[node name="leg1" type="Sprite2D" parent="leg1" unique_id=157831412]
+position = Vector2(0, 5)
+scale = Vector2(1, 0.7)
+texture = ExtResource("3_7t0p5")
+
+[node name="hand2" type="Marker2D" parent="." unique_id=909873065]
+position = Vector2(4, 8)
+
+[node name="hand2" type="Sprite2D" parent="hand2" unique_id=379542730]
+position = Vector2(0, 5)
+texture = ExtResource("2_y01d7")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1834517857]
+position = Vector2(32, 16)
+scale = Vector2(0.296875, 0.296875)
+texture = ExtResource("6_q10m3")
+script = ExtResource("7_ufaat")
