@@ -189,12 +189,13 @@ public partial class WorldRenderer : TileMapLayer
 		// Создаем массивы для массовой установки
 		var positions = new Godot.Collections.Array<Vector2I>();
 		var atlasCoordsArray = new Godot.Collections.Array<Vector2I>();
-
+		
 		int[] border = new int[chunkHeight * chunkWidth];
+		int lvl = 0;
 
 		for (int x = 0; x < chunkWidth; x++)
 		{
-			int lvl = 0;
+			lvl = 0;
 
 			for (int y = 0; y < chunkHeight; y++)
 			{
@@ -237,15 +238,24 @@ public partial class WorldRenderer : TileMapLayer
 			}
 		}
 
+		lvl = 0;
 		for (int step = 0; step < 7; step++)
 		{
 			// Создаём копию border
 			int[] borderCopy = new int[border.Length];
 			Buffer.BlockCopy(border, 0, borderCopy, 0, border.Length * sizeof(int));
-
+			
+			int heightUpdate = (int)(playerPos.Y / 16) + 50;
+			int heightUpdate2 = (int)(playerPos.Y / 16) - 50;
+			
+			if (heightUpdate >= chunkHeight)
+				heightUpdate = chunkHeight;
+			if (heightUpdate2 < 0)
+				heightUpdate2 = 0;
+			
 			for (int x = 0; x < chunkWidth; x++)
 			{
-				for (int y = 0; y < chunkHeight; y++)
+				for (int y = heightUpdate2; y < heightUpdate; y++)
 				{
 					int index = x * chunkHeight + y;
 					int tileId = borderCopy[index];
@@ -258,7 +268,7 @@ public partial class WorldRenderer : TileMapLayer
 							int iL = (x - 1) * chunkHeight + y;
 							// Проверяем, что сосед КАСАЕТСЯ воздуха (хотя бы один из его соседей — воздух)
 							if (TouchesAir(iL, chunkCurrent, chunkWidth, chunkHeight))
-								border[iL] = 0;
+								border[iL] = lvl;
 						}
 
 						// Право
@@ -266,7 +276,7 @@ public partial class WorldRenderer : TileMapLayer
 						{
 							int iR = (x + 1) * chunkHeight + y;
 							if (TouchesAir(iR, chunkCurrent, chunkWidth, chunkHeight))
-								border[iR] = 0;
+								border[iR] = lvl;
 						}
 
 						// Верх
@@ -274,7 +284,7 @@ public partial class WorldRenderer : TileMapLayer
 						{
 							int iUp = x * chunkHeight + (y - 1);
 							if (TouchesAir(iUp, chunkCurrent, chunkWidth, chunkHeight))
-								border[iUp] = 0;
+								border[iUp] = lvl;
 						}
 
 						// Низ
@@ -282,7 +292,7 @@ public partial class WorldRenderer : TileMapLayer
 						{
 							int iDown = x * chunkHeight + (y + 1);
 							if (TouchesAir(iDown, chunkCurrent, chunkWidth, chunkHeight))
-								border[iDown] = 0;
+								border[iDown] = lvl;
 						}
 					}
 				}
