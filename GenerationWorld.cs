@@ -7,35 +7,10 @@ using System.Text;
 using System.Threading.Tasks;
 
 using Godot;
+using BlockId = Storage.BlockId;
 
-class Generation
+public class Generation
 {
-	// ID блоков
-	enum BlockId : byte
-	{
-		Air = 0,
-		Water = 5,
-
-		Grass = 3,
-		Snow = 7,
-		Sand = 4,
-
-		Earth = 2,
-		Gravel = 6,
-
-		Stone = 1,
-
-		CarbonicBlock = 10,
-		IronBlock = 11,
-
-		Oak = 20,
-		Spruce = 21,
-		Сacti = 26,
-
-		FoliageOaking = 30,
-		FoliageSpruceing = 31
-	}
-
 	// Настройки мира
 	(int Upper, int Lower) LimitWater = (263, 280);  // Границы по высоте появления воды
 	(int Upper, int Lower) LimitCarbonic = (260, 410);  // Границы появления угольной руды
@@ -53,7 +28,7 @@ class Generation
 	int layerThicknessEarth = 4;  // Толщина слоя земли
 	int numOctave1D = 10; // Количество октав 1д шума
 
-	public static ConcurrentDictionary<ChunkKey, byte[]> worldMemory = new ConcurrentDictionary<ChunkKey, byte[]>();  // Ключ — (ID мира, Индекс чанка), Значение — массив байт этого чанка
+	public static ConcurrentDictionary<ChunkKey, byte[]> worldMemory;
 
 	// Списки шаблонов структур деревьев
 	private static List<byte> listTreesOaks = new List<byte>();  // Дуб
@@ -73,7 +48,7 @@ class Generation
 
 	Noise noise = new Noise();
 
-	static Generation()
+	public Generation()
 	{
 		// Запуск цикла генерации сида
 		System.Random random = new System.Random();
@@ -91,6 +66,8 @@ class Generation
 		lowerLimitBlocks = lowerLimitRelief;
 		midBlocksH = (upperLimitBlocks + lowerLimitBlocks) / 2.0;
 		amplitudeBlocks = upperLimitBlocks - lowerLimitBlocks;
+
+		worldMemory = Storage.WorldMemory;
 
 		// Заполняем списки
 		byte FO = (byte)BlockId.FoliageOaking;
@@ -124,7 +101,7 @@ class Generation
 			0, 0, 0, 0, 0, 0, 0,
 			];
 	}
-	public ConcurrentDictionary<ChunkKey, byte[]> CreationWorld()
+	public void CreationWorld()
 	{
 		var watch = System.Diagnostics.Stopwatch.StartNew();
 		
@@ -205,9 +182,9 @@ class Generation
 		
 		watch.Stop();
 		GD.Print($"\nГотово! Время полной генерации: {watch.ElapsedMilliseconds / 1000.0} секунд");
-		
-		// Возвращаем весь мир
-		return worldMemory;
+
+		// Обновляем
+		Storage.WorldMemory = worldMemory;
 	}
 
 

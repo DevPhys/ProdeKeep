@@ -3,89 +3,39 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 
+using BlockId = Storage.BlockId;
+
 public partial class WorldRenderer : TileMapLayer
 {
-	// ID блоков
-	enum BlockId : byte
-	{
-		Air = 0,
-		Water = 5,
-
-		Grass = 3,
-		Snow = 7,
-		Sand = 4,
-
-		Earth = 2,
-		Gravel = 6,
-
-		Stone = 1,
-
-		CarbonicBlock = 10,
-		IronBlock = 11,
-
-		Oak = 20,
-		Spruce = 21,
-		Сacti = 26,
-
-		FoliageOaking = 30,
-		FoliageSpruceing = 31
-	}
-
 	// Получаем ссылку на камеру
 	[Export] public Camera2D _camera;
 	[Export] public Player _player;
 
-	private TileMapLayer _tileMapLayer;
-
-	int darknessId = 39;
-	int penumbraIdAir = 28;
-	int darknessIdIdAir = 29;
-
-	int lightSource = 10;
-
 	Vector2 playerPos;
 
-	Generation generation;  // Обьевляем переменную класса генераци мира
-	ConcurrentDictionary<ChunkKey, byte[]> worldData = new ConcurrentDictionary<ChunkKey, byte[]>();  // Словарь чанков
-	HashSet<int> permittedBlock;
+	Generation generation;
+	Storage _storage = new Storage();
+	HashSet<int> transparentBlocks;
 
-	// Списки активных и неактивных чанков
 	List <ChunkKey> listChunkKey = new List<ChunkKey>();
 	List <ChunkKey> oldChunkKeys = new List<ChunkKey>();
 
-	int cameraX, cameraY;   // Переменные координат камеры
-	int screenWidth, screenHeight;  // Переменные размеры экрана
-	int currentChunk = 0;   // Переменная для определения чанка
+	int cameraX, cameraY;
+	int screenWidth, screenHeight;
+	int currentChunk = 0; 
 
-	private const int viewDistanceChunks = 4; // Сколько чанков видно влево/вправо
-	private HashSet<ChunkKey> renderedChunks = new HashSet<ChunkKey>();  // Состояние
+	private const int viewDistanceChunks = 4; 
+	private HashSet<ChunkKey> renderedChunks = new HashSet<ChunkKey>();
 
 	public override void _Ready()
 	{
-		// Создаем класс генерации 
-		generation = new Generation();
+		generation = new Generation(); 
+		generation.CreationWorld(); 
 
-		// Узнаем разрешение экрана
 		screenWidth = (int)DisplayServer.WindowGetSize().X;
 		screenHeight = (int)DisplayServer.WindowGetSize().Y;
-		
-		// Создаем мир
-		worldData = generation.CreationWorld();
 
-		permittedBlock = new HashSet<int>
-		{
-			(int)BlockId.Air,
-			(int)BlockId.Water,
-
-			(int)BlockId.FoliageOaking,
-			(int)BlockId.FoliageSpruceing,
-
-			(int)BlockId.Сacti,
-			(int)BlockId.Oak,
-			(int)BlockId.Spruce,
-
-			38,
-		};
+		transparentBlocks = _storage.TransparentBlocks;
 	}
 	public override void _Process(double delta)
 	{
@@ -97,27 +47,20 @@ public partial class WorldRenderer : TileMapLayer
 		else
 			playerPos = _camera.GlobalPosition;
 
-		// Узнаем позицию
 		cameraX = (int)playerPos.X;
 		cameraY = (int)playerPos.Y;
 		
-		// Узнаем на какой чанк смотрит игрок
 		currentChunk = cameraX / (16 * Generation.chunkHeightX);
 
 		if (currentChunk != currentChunckOld)
 		{
-			 // Рисуем только те чанки, которые видны
-			GenerateAndRenderWorld(worldData);
+			GenerateAndRenderWorld(Storage.WorldMemory);
 		}
+
 		if (Player.isBlock)
 		{
 			// Обнавляем чанк
-			worldData[Player.ChunkKeylocal] = Player.chunk;
-		}
-
-		if (playerPos != playerPosOld)
-		{
-			//GenerateChunk(new ChunkKey(0, currentChunk));
+			Storage.WorldMemory[Player.ChunkKey] = Player.Chunk;
 		}
 	}
 
@@ -170,7 +113,7 @@ public partial class WorldRenderer : TileMapLayer
 			if (chunkIndex < 0) continue;
 
 			var key = new ChunkKey(0, chunkIndex);
-			if (worldData.ContainsKey(key))
+			if (Storage.WorldMemory.ContainsKey(key))
 				listChunkKey.Add(key);
 		}
 	}
@@ -178,7 +121,7 @@ public partial class WorldRenderer : TileMapLayer
 	private void GenerateChunk(ChunkKey key)
 	{
 		// Рисуем видимые чанки
-		if (!worldData.TryGetValue(key, out byte[]? chunkCurrent))
+		if (!Storage.WorldMemory.TryGetValue(key, out byte[]? chunkCurrent))
 			return;
 
 		int chunkWidth = Generation.chunkHeightX;
@@ -202,7 +145,7 @@ public partial class WorldRenderer : TileMapLayer
 				int index = x * chunkHeight + y;
 				int tileId = chunkCurrent[index];
 
-				if (!permittedBlock.Contains(tileId))
+				if (!transparentBlocks.Contains(tileId))
 				{
 					if (lvl == 0)
 						lvl = 1;
@@ -214,7 +157,7 @@ public partial class WorldRenderer : TileMapLayer
 				{
 					if (lvl == 0)
 					{
-						border[index] = lightSource;
+						border[index] = (int)BlockId.LightSource;
 					}
 					else
 					{
@@ -225,9 +168,9 @@ public partial class WorldRenderer : TileMapLayer
 				{
 					if (lvl == 2)
 					{
-						if (tileId == 38)
+						if (tileId == (int)BlockId.Torch)
 						{
-							border[index] = lightSource;
+							border[index] = (int)BlockId.LightSource;
 						}
 						else
 						{
@@ -245,8 +188,8 @@ public partial class WorldRenderer : TileMapLayer
 			int[] borderCopy = new int[border.Length];
 			Buffer.BlockCopy(border, 0, borderCopy, 0, border.Length * sizeof(int));
 			
-			int heightUpdate = (int)(playerPos.Y / 16) + 50;
-			int heightUpdate2 = (int)(playerPos.Y / 16) - 50;
+			int heightUpdate = (int)(playerPos.Y / 16) + 30;
+			int heightUpdate2 = (int)(playerPos.Y / 16) - 30;
 			
 			if (heightUpdate >= chunkHeight)
 				heightUpdate = chunkHeight;
@@ -260,7 +203,7 @@ public partial class WorldRenderer : TileMapLayer
 					int index = x * chunkHeight + y;
 					int tileId = borderCopy[index];
 
-					if (tileId == lightSource || tileId == 0)
+					if (tileId == (int)BlockId.LightSource || tileId == 0)
 					{
 						// Лево
 						if (x > 0)
@@ -310,16 +253,15 @@ public partial class WorldRenderer : TileMapLayer
 				// Проверяем, ниже ли игрока этот блок
 				if (border[index] == 1)
 				{
-					// Заменяем на блок темноты
-					tileId = penumbraIdAir;
+					tileId = (int)BlockId.PenumbraIdForAir;
 				}
 				else if (border[index] == 2)
 				{
-					tileId = darknessIdIdAir;
+					tileId = (int)BlockId.DarknessIdForAir;
 				}
 				else if(border[index] == 3)
 				{
-					tileId = darknessId;
+					tileId = (int)BlockId.DarknessIdForBlocks;
 				}
 
 				positions.Add(new Vector2I(offsetX + x, y));
@@ -351,7 +293,6 @@ public partial class WorldRenderer : TileMapLayer
 			}
 		}
 	}
-
 	public void RedrawChunk(ChunkKey key)
 	{
 		ClearChunk(key);
@@ -365,13 +306,13 @@ public partial class WorldRenderer : TileMapLayer
 		int y = index % chunkHeight;
 
 		// Проверяем 4 стороны
-		if (x > 0 && permittedBlock.Contains(chunk[(x - 1) * chunkHeight + y]))
+		if (x > 0 && transparentBlocks.Contains(chunk[(x - 1) * chunkHeight + y]))
 			return true;
-		if (x < chunkWidth - 1 && permittedBlock.Contains(chunk[(x + 1) * chunkHeight + y]))
+		if (x < chunkWidth - 1 && transparentBlocks.Contains(chunk[(x + 1) * chunkHeight + y]))
 			return true;
-		if (y > 0 && permittedBlock.Contains(chunk[x * chunkHeight + (y - 1)]))
+		if (y > 0 && transparentBlocks.Contains(chunk[x * chunkHeight + (y - 1)]))
 			return true;
-		if (y < chunkHeight - 1 && permittedBlock.Contains(chunk[x * chunkHeight + (y + 1)]))
+		if (y < chunkHeight - 1 && transparentBlocks.Contains(chunk[x * chunkHeight + (y + 1)]))
 			return true;
 
 		return false;

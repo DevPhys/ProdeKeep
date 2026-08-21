@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using Godot;
+using BlockId = Storage.BlockId;
 
 public partial class Player : CharacterBody2D
 {
@@ -32,8 +33,8 @@ public partial class Player : CharacterBody2D
 	private int torchId = 38;
 
 	public static ConcurrentDictionary<ChunkKey, byte[]> worldMemory = new ConcurrentDictionary<ChunkKey, byte[]>();
-	public static byte[] chunk;
-	public static ChunkKey ChunkKeylocal;
+	public static byte[] Chunk;
+	public static ChunkKey ChunkKey;
 	public static bool isBlock = false;
 
 	public override void _Ready()
@@ -47,8 +48,11 @@ public partial class Player : CharacterBody2D
 		_leg1 = GetNode<Marker2D>("leg1");
 		_leg2 = GetNode<Marker2D>("leg2");
 
-		Position = new Vector2(200000 * 8, 100 * 16);
-		worldMemory = Generation.worldMemory;
+		int spawnX = (int)(Storage.WorldSizeBlocks * (int)BlockId.TileSize / 2);
+		int spawnY = 100 * (int)BlockId.TileSize;
+
+		Position = new Vector2(spawnX, spawnY);
+		worldMemory = Storage.WorldMemory;
 	}
 	public override void _PhysicsProcess(double delta)
 	{
@@ -65,11 +69,11 @@ public partial class Player : CharacterBody2D
 
 		// Вертикальная скорость с гравитацией
 		float verticalSpeed = Velocity.Y;
-		
+
 		if (IsOnFloor())
 		{
 			verticalSpeed = 0;
-			
+
 			if (Input.IsKeyPressed(Key.W))  // Стрелка вверх = прыжок
 			{
 				verticalSpeed = JumpVelocity;
@@ -81,7 +85,7 @@ public partial class Player : CharacterBody2D
 		}
 
 		Velocity = new Vector2(horizontalSpeed, verticalSpeed);
-		
+
 		MoveAndSlide();
 		AnimationPlayers(dt, inputDir);
 	}
@@ -90,14 +94,14 @@ public partial class Player : CharacterBody2D
 		if (ev is InputEventMouseButton mouseEvent && mouseEvent.Pressed)
 		{
 			bool isRange = false;
-			
+
 			// Получаем позицию мыши
 			Vector2 mousePos = GetGlobalMousePosition();
 			Vector2 playerPos = GlobalPosition;
-			
+
 			float distance = playerPos.DistanceTo(mousePos);
 			float distanceInBlocks = distance / sizeBlock;
-			
+
 			int blockX = 0, blockY = 0, localX = 0, currentChunk = 0, blockIndex = 0;
 			ChunkKey chunkKey;
 
@@ -109,13 +113,13 @@ public partial class Player : CharacterBody2D
 			{
 				isRange = false;
 			}
-			
+
 			if (isRange)
 			{
 				// Координаты блока в мире
 				blockX = Mathf.RoundToInt(mousePos.X / 16.0f);
 				blockY = Mathf.RoundToInt(mousePos.Y / 16.0f);
-				
+
 				localX = blockX % Generation.chunkHeightX;
 				currentChunk = blockX / Generation.chunkHeightX;  // Получаем текущий чанк
 
@@ -145,7 +149,7 @@ public partial class Player : CharacterBody2D
 	{
 		Input.MouseMode = Input.MouseModeEnum.Visible;
 	}
-	
+
 	private void DeleteBlock(ChunkKey chunkKey, int blockIndex, bool bl = true)
 	{
 		if (worldMemory.ContainsKey(chunkKey))
@@ -162,8 +166,8 @@ public partial class Player : CharacterBody2D
 			{
 				worldMemory[chunkKey][blockIndex] = 0;
 			}
-			chunk = worldMemory[chunkKey];
-			ChunkKeylocal = chunkKey;
+			Chunk = worldMemory[chunkKey];
+			ChunkKey = chunkKey;
 
 			worldRenderer.RedrawChunk(chunkKey);
 		}
@@ -182,10 +186,10 @@ public partial class Player : CharacterBody2D
 			if (bl)
 			{
 				if (worldMemory[chunkKey][blockIndex] == 0)
-					worldMemory[chunkKey][blockIndex] = (byte)torchId;
+					worldMemory[chunkKey][blockIndex] = (byte)BlockId.Torch;
 			}
-			chunk = worldMemory[chunkKey];
-			ChunkKeylocal = chunkKey;
+			Chunk = worldMemory[chunkKey];
+			ChunkKey = chunkKey;
 
 			worldRenderer.RedrawChunk(chunkKey);
 		}
