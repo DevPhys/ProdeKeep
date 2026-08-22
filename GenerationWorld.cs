@@ -36,10 +36,10 @@ public class Generation
 	private static List<byte> listTreesSpruce = new List<byte>();  // Ель
 
 	public static string seed; // Сид мира
-	public const int worldSizeBlocks = 200000; // Длина мира
-	public const int numWorld = 1; // Кол-во миров
-	public const int worldHeightY = 650; // глубина
-	public const int chunkHeightX = 25;  // Длина 1 чанка
+	public int worldSizeBlocks; // Длина мира
+	public int numWorld; // Кол-во миров
+	public int worldHeightY; // глубина
+	public int chunkHeightX;  // Длина 1 чанка
 
 	private static int upperLimitBlocks;  // Высота блока
 	private static int lowerLimitBlocks;  // минимальный блок
@@ -68,6 +68,10 @@ public class Generation
 		amplitudeBlocks = upperLimitBlocks - lowerLimitBlocks;
 
 		worldMemory = Storage.WorldMemory;
+		worldSizeBlocks = Storage.WorldSizeBlocks;
+		numWorld = Storage.NumWorld;
+		worldHeightY = Storage.WorldH;
+		chunkHeightX = Storage.ChunkW;
 
 		// Заполняем списки
 		byte FO = (byte)BlockId.FoliageOaking;

@@ -18,9 +18,9 @@ public partial class CameraPlayer : Camera2D
 		
 		int tileSize = 16;
 		_worldLeft = 0;
-		_worldRight = Generation.worldSizeBlocks * tileSize;
+		_worldRight = Storage.WorldSizeBlocks * tileSize;
 		_worldTop = 0;
-		_worldBottom = Generation.worldHeightY * tileSize - 1;
+		_worldBottom = Storage.WorldH * tileSize - 1;
 		
 		// Ищем игрока
 		_player = GetParent().GetNodeOrNull<CharacterBody2D>("Player");

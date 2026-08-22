@@ -21,7 +21,7 @@ public partial class Player : CharacterBody2D
 
 	private float _time = 0.0f;
 	private int rangeBlock = 4;
-	private int sizeBlock = 16;
+	private int sizeBlock = (int)BlockId.TileSize;
 
 	private Marker2D _torso;
 	private Marker2D _head;
@@ -29,8 +29,6 @@ public partial class Player : CharacterBody2D
 	private Marker2D _hand2;
 	private Marker2D _leg1;
 	private Marker2D _leg2;
-
-	private int torchId = 38;
 
 	public static ConcurrentDictionary<ChunkKey, byte[]> worldMemory = new ConcurrentDictionary<ChunkKey, byte[]>();
 	public static byte[] Chunk;
@@ -120,10 +118,10 @@ public partial class Player : CharacterBody2D
 				blockX = Mathf.RoundToInt(mousePos.X / 16.0f);
 				blockY = Mathf.RoundToInt(mousePos.Y / 16.0f);
 
-				localX = blockX % Generation.chunkHeightX;
-				currentChunk = blockX / Generation.chunkHeightX;  // Получаем текущий чанк
+				localX = blockX % Storage.ChunkW;
+				currentChunk = blockX / Storage.ChunkW;  // Получаем текущий чанк
 
-				blockIndex = localX * Generation.worldHeightY + blockY;  // Индекс в массиве чанка
+				blockIndex = localX * Storage.WorldH + blockY;  // Индекс в массиве чанка
 
 				chunkKey = new ChunkKey(worldId: 0, chunkIdx: currentChunk);  // Проверяем, что индекс в пределах массива
 

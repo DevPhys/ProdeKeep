@@ -19,9 +19,9 @@ public partial class Camera : Camera2D
 
 		int tileSize = 16;
 		_worldLeft = 0;
-		_worldRight = Generation.worldSizeBlocks * tileSize;
+		_worldRight = Storage.WorldSizeBlocks * tileSize;
 		_worldTop = 0;
-		_worldBottom = Generation.worldHeightY * tileSize - 1;
+		_worldBottom = Storage.WorldH * tileSize - 1;
 
 		Position = new Vector2(_worldRight / 2, _worldBottom / 2);
 		Position = Position.Round();

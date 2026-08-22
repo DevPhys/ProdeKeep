@@ -5,6 +5,9 @@ using System.Collections.Generic;
 
 using BlockId = Storage.BlockId;
 
+using System.Threading;
+using System.Threading.Tasks;
+
 public partial class WorldRenderer : TileMapLayer
 {
 	// Получаем ссылку на камеру
@@ -15,6 +18,7 @@ public partial class WorldRenderer : TileMapLayer
 
 	Generation generation;
 	Storage _storage = new Storage();
+
 	HashSet<int> transparentBlocks;
 
 	List <ChunkKey> listChunkKey = new List<ChunkKey>();
@@ -50,7 +54,7 @@ public partial class WorldRenderer : TileMapLayer
 		cameraX = (int)playerPos.X;
 		cameraY = (int)playerPos.Y;
 		
-		currentChunk = cameraX / (16 * Generation.chunkHeightX);
+		currentChunk = cameraX / ((int)BlockId.TileSize * Storage.ChunkW);
 
 		if (currentChunk != currentChunckOld)
 		{
@@ -124,18 +128,25 @@ public partial class WorldRenderer : TileMapLayer
 		if (!Storage.WorldMemory.TryGetValue(key, out byte[]? chunkCurrent))
 			return;
 
-		int chunkWidth = Generation.chunkHeightX;
-		int chunkHeight = Generation.worldHeightY;
+		int[] border = new int[Storage.WorldH * Storage.ChunkW];
 
+		int chunkWidth = Storage.ChunkW;
+		int chunkHeight = Storage.WorldH;
 		int offsetX = key.ChunkIdx * chunkWidth;
+
+		int heightUpdate = (int)(playerPos.Y / (int)BlockId.TileSize) + 50;
+		int heightUpdate2 = (int)(playerPos.Y / (int)BlockId.TileSize) - 50;
+
+		if (heightUpdate >= chunkHeight)
+			heightUpdate = chunkHeight;
+		if (heightUpdate2 < 0)
+			heightUpdate2 = 0;
 
 		// Создаем массивы для массовой установки
 		var positions = new Godot.Collections.Array<Vector2I>();
 		var atlasCoordsArray = new Godot.Collections.Array<Vector2I>();
 		
-		int[] border = new int[chunkHeight * chunkWidth];
 		int lvl = 0;
-
 		for (int x = 0; x < chunkWidth; x++)
 		{
 			lvl = 0;
@@ -182,65 +193,60 @@ public partial class WorldRenderer : TileMapLayer
 		}
 
 		lvl = 0;
-		for (int step = 0; step < 7; step++)
+		Task.Run(() =>
 		{
-			// Создаём копию border
-			int[] borderCopy = new int[border.Length];
-			Buffer.BlockCopy(border, 0, borderCopy, 0, border.Length * sizeof(int));
-			
-			int heightUpdate = (int)(playerPos.Y / 16) + 30;
-			int heightUpdate2 = (int)(playerPos.Y / 16) - 30;
-			
-			if (heightUpdate >= chunkHeight)
-				heightUpdate = chunkHeight;
-			if (heightUpdate2 < 0)
-				heightUpdate2 = 0;
-			
-			for (int x = 0; x < chunkWidth; x++)
+			for (int step = 0; step < 7; step++)
 			{
-				for (int y = heightUpdate2; y < heightUpdate; y++)
+				// Создаём копию border
+				int[] borderCopy = new int[border.Length];
+				Buffer.BlockCopy(border, 0, borderCopy, 0, border.Length * sizeof(int));
+
+				for (int x = 0; x < chunkWidth; x++)
 				{
-					int index = x * chunkHeight + y;
-					int tileId = borderCopy[index];
-
-					if (tileId == (int)BlockId.LightSource || tileId == 0)
+					for (int y = heightUpdate2; y < heightUpdate; y++)
 					{
-						// Лево
-						if (x > 0)
-						{
-							int iL = (x - 1) * chunkHeight + y;
-							// Проверяем, что сосед КАСАЕТСЯ воздуха (хотя бы один из его соседей — воздух)
-							if (TouchesAir(iL, chunkCurrent, chunkWidth, chunkHeight))
-								border[iL] = lvl;
-						}
+						int index = x * chunkHeight + y;
+						int tileId = borderCopy[index];
 
-						// Право
-						if (x < chunkWidth - 1)
+						if (tileId == (int)BlockId.LightSource || tileId == 0)
 						{
-							int iR = (x + 1) * chunkHeight + y;
-							if (TouchesAir(iR, chunkCurrent, chunkWidth, chunkHeight))
-								border[iR] = lvl;
-						}
+							// Лево
+							if (x > 0)
+							{
+								int iL = (x - 1) * chunkHeight + y;
+								// Проверяем, что сосед КАСАЕТСЯ воздуха (хотя бы один из его соседей — воздух)
+								if (TouchesAir(iL, chunkCurrent, chunkWidth, chunkHeight))
+									border[iL] = lvl;
+							}
 
-						// Верх
-						if (y > 0)
-						{
-							int iUp = x * chunkHeight + (y - 1);
-							if (TouchesAir(iUp, chunkCurrent, chunkWidth, chunkHeight))
-								border[iUp] = lvl;
-						}
+							// Право
+							if (x < chunkWidth - 1)
+							{
+								int iR = (x + 1) * chunkHeight + y;
+								if (TouchesAir(iR, chunkCurrent, chunkWidth, chunkHeight))
+									border[iR] = lvl;
+							}
 
-						// Низ
-						if (y < chunkHeight - 1)
-						{
-							int iDown = x * chunkHeight + (y + 1);
-							if (TouchesAir(iDown, chunkCurrent, chunkWidth, chunkHeight))
-								border[iDown] = lvl;
+							// Верх
+							if (y > 0)
+							{
+								int iUp = x * chunkHeight + (y - 1);
+								if (TouchesAir(iUp, chunkCurrent, chunkWidth, chunkHeight))
+									border[iUp] = lvl;
+							}
+
+							// Низ
+							if (y < chunkHeight - 1)
+							{
+								int iDown = x * chunkHeight + (y + 1);
+								if (TouchesAir(iDown, chunkCurrent, chunkWidth, chunkHeight))
+									border[iDown] = lvl;
+							}
 						}
 					}
 				}
 			}
-		}
+		});
 
 		// Проходим по столбцам 
 		for (int x = 0; x < chunkWidth; x++)
@@ -276,9 +282,9 @@ public partial class WorldRenderer : TileMapLayer
 	}
 	private void ClearChunk(ChunkKey key)
 	{
-		int chunkWidth = Generation.chunkHeightX;
-		int chunkHeight = Generation.worldHeightY;
-		int chunksPerWorld = Generation.worldSizeBlocks / chunkWidth;
+		int chunkWidth = Storage.ChunkW;
+		int chunkHeight = Storage.WorldH;
+		int chunksPerWorld = Storage.WorldSizeBlocks / chunkWidth;
 
 		int globalIndex = key.WorldId * chunksPerWorld + key.ChunkIdx;
 		int offsetX = key.ChunkIdx * chunkWidth;
