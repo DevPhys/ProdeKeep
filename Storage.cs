@@ -37,16 +37,30 @@ public class Storage
 		DarknessIdForBlocks = 39,
 		PenumbraIdForAir = 28,
 		DarknessIdForAir = 29,
-		
+
+		Bush = 8,
+		DryBush = 9,
+
 		Torch = 38,
 
 		LightSource = 10,
 		TileSize = 16,
+
+		Null = 19,
 	}
 
 	// Ключ — (ID мира, Индекс чанка), Значение — массив байт этого чанка
 	public static ConcurrentDictionary<ChunkKey, byte[]> WorldMemory = new ConcurrentDictionary<ChunkKey, byte[]>();
+
 	public HashSet<int> TransparentBlocks;
+	public static List<byte> BlocksForInventory = new List<byte> {
+		(byte)BlockId.Water, (byte)BlockId.Grass, (byte)BlockId.Snow, (byte)BlockId.Sand,
+		(byte)BlockId.Earth, (byte)BlockId.Gravel, (byte)BlockId.Stone,
+		(byte)BlockId.CarbonicBlock, (byte)BlockId.IronBlock,
+		(byte)BlockId.Oak, (byte)BlockId.Spruce, (byte)BlockId.Сacti,
+		(byte)BlockId.FoliageOaking, (byte)BlockId.FoliageSpruceing,
+		(byte)BlockId.Bush, (byte)BlockId.DryBush, (byte)BlockId.Torch,
+	};
 
 	public static int WorldSizeBlocks = 200000; // Длина мира
 	public static int NumWorld = 1; // Кол-во миров
@@ -67,7 +81,11 @@ public class Storage
 			(int)BlockId.Oak,
 			(int)BlockId.Spruce,
 
+			(int)BlockId.Bush,
+			(int)BlockId.DryBush,
+
 			(int)BlockId.Torch,
+			(int)BlockId.Null,
 		};
 	}
 }

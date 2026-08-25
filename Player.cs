@@ -35,6 +35,8 @@ public partial class Player : CharacterBody2D
 	public static ChunkKey ChunkKey;
 	public static bool isBlock = false;
 
+	private bool isInventory;
+
 	public override void _Ready()
 	{
 		Input.MouseMode = Input.MouseModeEnum.Hidden;
@@ -57,6 +59,26 @@ public partial class Player : CharacterBody2D
 		float dt = (float)delta;
 		Vector2 inputDir = Vector2.Zero;
 
+		isInventory = Gameplayer.isInventory;
+		// Вертикальная скорость с гравитацией
+		float verticalSpeed = Velocity.Y;
+		if (isInventory)
+		{
+			if (IsOnFloor())
+			{
+				verticalSpeed = 0;
+			}
+			else
+			{
+				verticalSpeed += Gravity * dt;
+			}
+
+			MoveAndSlide();
+			AnimationPlayers(dt, inputDir);
+
+			return;
+		}
+
 		if (Input.IsKeyPressed(Key.A))
 			inputDir.X -= 1;
 		else if (Input.IsKeyPressed(Key.D))
@@ -66,7 +88,7 @@ public partial class Player : CharacterBody2D
 		float horizontalSpeed = inputDir.X * Speed;
 
 		// Вертикальная скорость с гравитацией
-		float verticalSpeed = Velocity.Y;
+		verticalSpeed = Velocity.Y;
 
 		if (IsOnFloor())
 		{
@@ -184,7 +206,7 @@ public partial class Player : CharacterBody2D
 			if (bl)
 			{
 				if (worldMemory[chunkKey][blockIndex] == 0)
-					worldMemory[chunkKey][blockIndex] = (byte)BlockId.Torch;
+					worldMemory[chunkKey][blockIndex] = (byte)IventoryNode.currentBlock;
 			}
 			Chunk = worldMemory[chunkKey];
 			ChunkKey = chunkKey;
