@@ -34,5 +34,7 @@ project/assembly_name="ProbeKeep"
 [rendering]
 
 rendering_device/driver.windows="d3d12"
+renderer/rendering_method="mobile"
+driver/threads/thread_model=0
 environment/defaults/default_clear_color=Color(0.1882353, 0.8352941, 0.9254902, 1)
 occlusion_culling/use_occlusion_culling=true
