@@ -5,6 +5,7 @@
 [ext_resource type="Texture2D" uid="uid://kqj5m05ll333" path="res://Asset/Atlas.png" id="2_54nnu"]
 [ext_resource type="Script" uid="uid://cgckmnnvak2cs" path="res://Objects/Iventory/Iventory.cs" id="3_54nnu"]
 [ext_resource type="Texture2D" uid="uid://dqfvdfgrqnd28" path="res://Asset/Указатель.png" id="5_nbary"]
+[ext_resource type="Script" uid="uid://dc04elvq6ip8c" path="res://Objects/Iventory/NameBlock.cs" id="6_8f8o6"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_ipyjm"]
 texture = ExtResource("2_54nnu")
@@ -51,6 +52,8 @@ texture = ExtResource("2_54nnu")
 
 [sub_resource type="TileSet" id="TileSet_ki7qs"]
 sources/0 = SubResource("TileSetAtlasSource_ipyjm")
+
+[sub_resource type="LabelSettings" id="LabelSettings_8f8o6"]
 
 [node name="Inventory" type="Node2D" unique_id=728962376 node_paths=PackedStringArray("pointer")]
 script = ExtResource("1_ipyjm")
@@ -117,3 +120,14 @@ centered = false
 scale = Vector2(0.8, 0.8)
 texture = ExtResource("5_nbary")
 centered = false
+
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1904974252]
+
+[node name="NameBlock" type="Label" parent="CanvasLayer" unique_id=1006000740]
+offset_left = 531.0
+offset_top = 544.0
+offset_right = 652.0
+offset_bottom = 567.0
+theme_override_font_sizes/font_size = 20
+label_settings = SubResource("LabelSettings_8f8o6")
+script = ExtResource("6_8f8o6")
