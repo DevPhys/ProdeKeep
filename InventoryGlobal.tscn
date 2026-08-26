@@ -1,9 +1,8 @@
-[gd_scene format=3 uid="uid://bcx5drlwmvt3w"]
+[gd_scene format=4 uid="uid://bcx5drlwmvt3w"]
 
 [ext_resource type="Script" uid="uid://cf0aov0kressa" path="res://Objects/InvettoryGlobal/InventoryGlobalNode.cs" id="1_74i20"]
 [ext_resource type="Texture2D" uid="uid://kqj5m05ll333" path="res://Asset/Atlas.png" id="2_mu5j7"]
 [ext_resource type="PackedScene" uid="uid://cg1tuqn7y6ta2" path="res://Objects/Iventory/Iventory.tscn" id="2_yqans"]
-[ext_resource type="Script" uid="uid://bklp2nmchdfkn" path="res://Objects/InvettoryGlobal/InventoryGlobal.cs" id="3_mu5j7"]
 [ext_resource type="Texture2D" uid="uid://bhxltdcgre3t3" path="res://Asset/Внутренний инвентарь.png" id="4_2qcou"]
 [ext_resource type="Script" uid="uid://e6b71rtna3b4" path="res://Objects/InvettoryGlobal/BlockMous.cs" id="4_74i20"]
 
@@ -53,6 +52,50 @@ texture = ExtResource("2_mu5j7")
 [sub_resource type="TileSet" id="TileSet_ki7qs"]
 sources/0 = SubResource("TileSetAtlasSource_tpc4c")
 
+[sub_resource type="CSharpScript" id="CSharpScript_mu5j7"]
+script/source = "using Godot;
+using System;
+
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+
+public partial class InventoryGlobal : TileMapLayer
+{
+	List<byte> listInventory = Storage.BlocksForInventory;
+	int linNumX = 0;
+	int linNumY = 1;
+
+	int linNumXLimit = 9;
+	int linNumYLimit = 8;
+
+	// Called when the node enters the scene tree for the first time.
+	public override void _Ready()
+	{
+	}
+
+	// Called every frame. 'delta' is the elapsed time since the previous frame.
+	public override void _Process(double delta)
+	{
+		linNumX = 0;
+		linNumY = 1;
+
+		for (int i = 0; i < listInventory.Count; i++)
+		{
+			if (linNumX > linNumXLimit)
+			{
+				linNumX = 0;
+				linNumY++;
+			}
+
+			int tileId = listInventory[i];
+			SetCell(new Vector2I(linNumX, linNumY), 0, new Vector2I(tileId % 10, tileId / 10));
+
+			linNumX++;
+		}
+	}
+}
+"
+
 [node name="InventoryGlobal" type="Node2D" unique_id=1580434154 node_paths=PackedStringArray("tileMapLayer", "_block")]
 scale = Vector2(3, 3)
 script = ExtResource("1_74i20")
@@ -61,8 +104,9 @@ inventory = ExtResource("2_yqans")
 _block = NodePath("Block")
 
 [node name="TileMapLayer" type="TileMapLayer" parent="." unique_id=1719380340]
+tile_map_data = PackedByteArray("AAAAAAEAAAABAAAAAAABAAEAAAACAAAAAAACAAEAAAADAAAAAAADAAEAAAAEAAAAAAAEAAEAAAAGAAAAAAAFAAEAAAAHAAAAAAAGAAEAAAAFAAAAAAAHAAEAAAAIAAAAAAAIAAEAAAAJAAAAAAAJAAEAAAAIAAMAAAAAAAIAAAAAAAEAAAABAAIAAAABAAEAAAACAAIAAAACAAEAAAADAAIAAAADAAEAAAAEAAIAAAAEAAEAAAAFAAIAAAAFAAEAAAAGAAIAAAAGAAEAAAAAAAMAAAAAAAIAAAABAAMAAAABAAIAAAAAAAQAAAAAAAMAAAABAAQAAAABAAMAAAACAAQAAAAGAAIAAAA=")
 tile_set = SubResource("TileSet_ki7qs")
-script = ExtResource("3_mu5j7")
+script = SubResource("CSharpScript_mu5j7")
 
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=1775849603]
 scale = Vector2(0.8, 0.8)
