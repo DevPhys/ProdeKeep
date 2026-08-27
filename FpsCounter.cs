@@ -23,7 +23,10 @@ public partial class FpsCounter : Label
 		float positionPlayerY = _player.GlobalPosition.Y / 16;
 
 		// Обновляем текст
-		Text = $"FPS: {_fps:F0}\nPosition X: {positionPlayerX}\nPosition Y: {positionPlayerY}";
+		Text = $"" +
+			$"FPS: {_fps:F2}\n" +
+			$"Position X: {positionPlayerX}\n" +
+			$"Position Y: {positionPlayerY}";
 
 		_times.Add(_fps);
 		if (_times.Count == 60 * 60)
@@ -32,7 +35,7 @@ public partial class FpsCounter : Label
 
 	private void PrintFpsStatistics()
 	{
-		if (_times.Count == 0)
+		if (_times.Count <= 0)
 		{
 			GD.Print("Нет данных о FPS");
 			return;
@@ -65,5 +68,7 @@ public partial class FpsCounter : Label
 		GD.Print($"Медианный FPS: {medianFps:F2}");
 		GD.Print($"Всего кадров: {_times.Count}");
 		GD.Print("=====================");
+
+		_times.Clear();
 	}
 }

@@ -24,8 +24,13 @@ public class Storage
 
 		Stone = 1,
 
-		CarbonicBlock = 10,
-		IronBlock = 11,
+		CarbonicOre = 10,
+		IronOre = 11,
+		GoldOre = 12,
+		CopperOre = 13,
+		AluminumOre = 14,
+		RubyOre = 15,
+		DiamondOre = 16,
 
 		Oak = 20,
 		Spruce = 21,
@@ -33,10 +38,6 @@ public class Storage
 
 		FoliageOaking = 30,
 		FoliageSpruceing = 31,
-
-		DarknessIdForBlocks = 39,
-		PenumbraIdForAir = 28,
-		DarknessIdForAir = 29,
 
 		Bush = 8,
 		DryBush = 9,
@@ -46,21 +47,44 @@ public class Storage
 		LightSource = 10,
 		TileSize = 16,
 
+		DarknessIdForBlocks = 39,
+		PenumbraIdForAir = 28,
+		DarknessIdForAir = 29,
+
 		Null = 19,
 	}
+
+	public static Dictionary<int, string> NameBlocks = new Dictionary<int, string> {
+		{ (int)BlockId.Air, "Air" },
+		{ (int)BlockId.Null, ""  },
+		{ (int)BlockId.Water, "Water" },
+		{ (int)BlockId.Grass, "Grass" },
+		{ (int)BlockId.Snow, "Snow" },
+		{ (int)BlockId.Sand, "Sand" },
+		{ (int)BlockId.Earth, "Earth" },
+		{ (int)BlockId.Gravel, "Gravel" },
+		{ (int)BlockId.Stone, "Stone" },
+		{ (int)BlockId.CarbonicOre, "Carbonic Ore" },
+		{ (int)BlockId.IronOre, "Iron Ore" },
+		{ (int)BlockId.GoldOre, "Gold Ore" },
+		{ (int)BlockId.CopperOre, "Copper Ore" },
+		{ (int)BlockId.AluminumOre, "Aluminum Ore" },
+		{ (int)BlockId.RubyOre, "Ruby Ore" },
+		{ (int)BlockId.DiamondOre, "Diamond Ore" },
+		{ (int)BlockId.Oak, "Oak" },
+		{ (int)BlockId.Spruce, "Spruce" },
+		{ (int)BlockId.Сacti, "Cacti" },
+		{ (int)BlockId.FoliageOaking, "Foliage Oaking" },
+		{ (int)BlockId.FoliageSpruceing, "Foliage Spruceing" },
+		{ (int)BlockId.Bush, "Bush" },
+		{ (int)BlockId.DryBush, "Dry Bush" },
+		{ (int)BlockId.Torch, "Torch" },
+	};
 
 	// Ключ — (ID мира, Индекс чанка), Значение — массив байт этого чанка
 	public static ConcurrentDictionary<ChunkKey, byte[]> WorldMemory = new ConcurrentDictionary<ChunkKey, byte[]>();
 
 	public HashSet<int> TransparentBlocks;
-	public static List<byte> BlocksForInventory = new List<byte> {
-		(byte)BlockId.Water, (byte)BlockId.Grass, (byte)BlockId.Snow, (byte)BlockId.Sand,
-		(byte)BlockId.Earth, (byte)BlockId.Gravel, (byte)BlockId.Stone,
-		(byte)BlockId.CarbonicBlock, (byte)BlockId.IronBlock,
-		(byte)BlockId.Oak, (byte)BlockId.Spruce, (byte)BlockId.Сacti,
-		(byte)BlockId.FoliageOaking, (byte)BlockId.FoliageSpruceing,
-		(byte)BlockId.Bush, (byte)BlockId.DryBush, (byte)BlockId.Torch,
-	};
 
 	public static int WorldSizeBlocks = 200000; // Длина мира
 	public static int NumWorld = 1; // Кол-во миров

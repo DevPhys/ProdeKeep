@@ -115,3 +115,14 @@ centered = false
 
 [node name="Block" type="Sprite2D" parent="." unique_id=859156389]
 script = ExtResource("4_74i20")
+
+[node name="Clue" type="Label" parent="." unique_id=1161607994]
+offset_left = -84.666664
+offset_top = 80.66667
+offset_right = 0.33333588
+offset_bottom = 144.0
+theme_override_font_sizes/font_size = 8
+text = "RMB - replace a block 
+in the Hotbar
+LMB - select a block 
+in the inventory"

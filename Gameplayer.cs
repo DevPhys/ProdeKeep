@@ -11,6 +11,11 @@ public partial class Gameplayer : Node2D
 
 	public override void _Ready()
 	{
+		// 1. Отключаем вертикальную синхронизацию
+		//DisplayServer.WindowSetVsyncMode(DisplayServer.VSyncMode.Disabled);
+
+		// 2. Убираем лимит кадров (0 — бесконечно)
+		//Engine.MaxFps = 0;
 	}
 
 	// Этот метод автоматически вызывается для необработанных событий ввода
@@ -34,7 +39,7 @@ public partial class Gameplayer : Node2D
 		if (@event is InputEventKey keyEvent && keyEvent.Pressed)
 		{
 			// Клавиша E - открыть инвентарь
-			if (keyEvent.Keycode == Key.E)
+			if (keyEvent.Keycode == Key.E && !isInventory)
 			{
 				Input.MouseMode = Input.MouseModeEnum.Visible;
 				OpenInventory();
@@ -42,7 +47,7 @@ public partial class Gameplayer : Node2D
 			}
 
 			// Клавиша Escape - закрыть инвентарь
-			if (keyEvent.Keycode == Key.R)
+			else if (keyEvent.Keycode == Key.E && isInventory)
 			{
 				Input.MouseMode = Input.MouseModeEnum.Hidden;
 				CloseInventory();

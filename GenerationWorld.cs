@@ -14,7 +14,13 @@ public class Generation
 	// Настройки мира
 	(int Upper, int Lower) LimitWater = (263, 280);  // Границы по высоте появления воды
 	(int Upper, int Lower) LimitCarbonic = (260, 410);  // Границы появления угольной руды
-	(int Upper, int Lower) LimitIron = (290, 650);  // Границы появления железной руды
+	(int Upper, int Lower) LimitIron = (290, 520);  // Границы появления железной руды
+	(int Upper, int Lower) LimitGold = (340, 590); // Границы появления золотой руды
+	(int Upper, int Lower) LimitCopper = (260, 456); // Границы появления медной руды
+
+	(int Upper, int Lower) LimitAluminum = (280, 500); // Границы появления алюминиевой руды
+	(int Upper, int Lower) LimitRuby = (450, 600); // Границы появления рубиновой руды
+	(int Upper, int Lower) LimitDiamond = (590, 650); // Границы появления алмазной руды
 
 	// Настройка пещер
 	(int Upper, int Lower) upperLimitCave = (31, 53);
@@ -109,18 +115,24 @@ public class Generation
 	{
 		var watch = System.Diagnostics.Stopwatch.StartNew();
 		
-		// Создаем мир из 0 и 1
+		// Создаем базовый рельеф с пещерами и биомами
 		GenerationWorld();
 
 		int SeedMap = NumberFromSeed(BasicNumber: 92, Factor: 3, Renge: (10, 99));
-		int[] p = Perm(Seed: 2);
+		int[] p = Perm(Seed: SeedMap * 10);
 
 		int numsChunk = worldSizeBlocks / chunkHeightX;  // Находим количество чанков
 
 		double[] waterNoise = GenerateNoiseMap(Seed: SeedMap * 5);  // Создаем карту вод
-		double[] carbonicNoise = GenerateNoiseMap(Seed: SeedMap + 100);  // Создаем карту высот появления угольной руды
+		double[] carbonicNoise = GenerateNoiseMap(Seed: SeedMap + 100);  // Создаем карту появления угольной руды
+
 		double[] ironNoise = GenerateNoiseMap(Seed: SeedMap + 200);  // Создаем карту появления железной руды
-		double[] carbonicNoiseX = GenerateNoiseMap(Seed: SeedMap - 100);  // Создаем карту по Х появления угольной руды
+		double[] goldNoise = GenerateNoiseMap(Seed: SeedMap + 300);  // Создаем карту появления золотой руды
+		double[] copperNoise = GenerateNoiseMap(Seed: SeedMap + 400);  // Создаем карту появления медной руды
+
+		double[] aluminumNoise = GenerateNoiseMap(Seed: SeedMap + 500);  // Создаем карту появления алюминивой руды
+		double[] rubyNoise = GenerateNoiseMap(Seed: SeedMap + 600);  // Создаем карту появления рубиновой руды
+		double[] diamondNoise = GenerateNoiseMap(Seed: SeedMap + 700);  // Создаем карту появления алмазной руды
 
 		int[] permOaks = Perm(Seed: 10);
 		int[] permCacti = Perm(Seed: 11);
@@ -140,21 +152,51 @@ public class Generation
 
 			// Работаем с локальной копией
 			byte[] localChunk = chunk;
+			(ChunkKey Key, byte[] Chunk) main = (localKey, localChunk);
 
-			GenerationWater(waterNoise, i, (localKey, localChunk));  // Создаем озера
-			GenerationWaterSand(i, (localKey, localChunk));  // Создаем речной песок на дне озер
-
+			GenerationWater(waterNoise, i, main);  // Создаем озера
+			GenerationWaterSand(i, main);  // Создаем речной песок на дне озер
 			GenerationOre(carbonicNoise, p, i,
 				Frequency: (0.18, 0.68),
-				IDblock: (byte)BlockId.CarbonicBlock,
-				Limit: (LimitCarbonic.Upper, LimitCarbonic.Lower), 
-				Main: (localKey, localChunk));  // Создаем уголь
-			GenerationOre(ironNoise, p, i,
-				Frequency: (0.20, 0.78),
-				IDblock: (byte)BlockId.IronBlock,
-				Limit: (LimitIron.Upper, LimitIron.Lower),
-				Main: (localKey, localChunk));  // Создаем железо
+				IDblock: (byte)BlockId.CarbonicOre,
+				Limit: LimitCarbonic, 
+				Main: main);  // Создаем жалежы уголя
 
+			// Создаем металл
+			GenerationOre(ironNoise, p, i,
+				Frequency: (0.20, 0.75),
+				IDblock: (byte)BlockId.IronOre,
+				Limit: LimitIron,
+				Main: main);  // Создаем жалежы железа
+			GenerationOre(copperNoise, p, i,
+				Frequency: (0.20, 0.65),
+				IDblock: (byte)BlockId.CopperOre,
+				Limit: LimitCopper,
+				Main: main);  // Создаем жалежы меди
+			GenerationOre(aluminumNoise, p, i,
+				Frequency: (0.20, 0.50),
+				IDblock: (byte)BlockId.AluminumOre,
+				Limit: LimitAluminum,
+				Main: main);  // Создаем жалежы алюминия
+
+			// Создаем драгоценные камни
+			GenerationOre(rubyNoise, p, i,
+				Frequency: (0.15, 0.98),
+				IDblock: (byte)BlockId.RubyOre,
+				Limit: LimitRuby,
+				Main: main);  // Создаем жалежы рубина
+			GenerationOre(diamondNoise, p, i,
+				Frequency: (0.16, 0.91),
+				IDblock: (byte)BlockId.DiamondOre,
+				Limit: LimitDiamond,
+				Main: main);  // Создаем жалежы алмазов
+			GenerationOre(goldNoise, p, i,
+				Frequency: (0.17, 0.88),
+				IDblock: (byte)BlockId.GoldOre,
+				Limit: LimitGold,
+				Main: main);  // Создаем жалежы золота
+
+			// Создаем растительность
 			GenerationStructures(Index: i, Step: 5,
 				AllowedBlocks: (
 					[(byte)BlockId.Air, (byte)BlockId.Grass, (byte)BlockId.Earth],
@@ -163,7 +205,7 @@ public class Generation
 				SizeStructure: (2, 5),
 				ListStructure: listTreesOaks,
 				Permutation: permOaks,
-				Main: (localKey, localChunk));  // Размещаем дубы
+				Main: main);  // Размещаем дубы
 			GenerationStructures(Index: i, Step: 5,
 				AllowedBlocks: (
 					[(byte)BlockId.Air],
@@ -172,7 +214,7 @@ public class Generation
 				SizeStructure: (2, 5),
 				ListStructure: listTreesСacti,
 				Permutation: permCacti,
-				Main: (localKey, localChunk));  // Размещаем кактусы
+				Main: main);  // Размещаем кактусы
 			GenerationStructures(Index: i, Step: 7,
 				AllowedBlocks: (
 					[(byte)BlockId.Air, (byte)BlockId.Snow],
@@ -181,7 +223,7 @@ public class Generation
 				SizeStructure: (4, 7),
 				ListStructure: listTreesSpruce,
 				Permutation: permSpruce,
-				Main: (localKey, localChunk));  // Размещаем ели
+				Main: main);  // Размещаем ели
 		});
 		
 		watch.Stop();

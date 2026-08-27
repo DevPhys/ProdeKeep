@@ -129,6 +129,7 @@ public partial class WorldRenderer : TileMapLayer
 			return;
 
 		int[] border = new int[Storage.WorldH * Storage.ChunkW];
+		bool isLighting = true;
 
 		int chunkWidth = Storage.ChunkW;
 		int chunkHeight = Storage.WorldH;
@@ -146,107 +147,110 @@ public partial class WorldRenderer : TileMapLayer
 		var positions = new Godot.Collections.Array<Vector2I>();
 		var atlasCoordsArray = new Godot.Collections.Array<Vector2I>();
 		
-		int lvl = 0;
-		for (int x = 0; x < chunkWidth; x++)
+		if (isLighting)
 		{
-			lvl = 0;
-
-			for (int y = 0; y < chunkHeight; y++)
+			int lvl = 0;
+			for (int x = 0; x < chunkWidth; x++)
 			{
-				int index = x * chunkHeight + y;
-				int tileId = chunkCurrent[index];
+				lvl = 0;
 
-				if (!transparentBlocks.Contains(tileId))
+				for (int y = 0; y < chunkHeight; y++)
 				{
-					if (lvl == 0)
-						lvl = 1;
-					else if (lvl == 1)
-						lvl = 2;
-				}
+					int index = x * chunkHeight + y;
+					int tileId = chunkCurrent[index];
 
-				if (tileId == (int)BlockId.Air)
-				{
-					if (lvl == 0)
+					if (!transparentBlocks.Contains(tileId))
 					{
-						border[index] = (int)BlockId.LightSource;
+						if (lvl == 0)
+							lvl = 1;
+						else if (lvl == 1)
+							lvl = 2;
 					}
-					else
+
+					if (tileId == (int)BlockId.Air)
 					{
-						border[index] = lvl;
-					}
-				}
-				else
-				{
-					if (lvl == 2)
-					{
-						if (tileId == (int)BlockId.Torch)
+						if (lvl == 0)
 						{
 							border[index] = (int)BlockId.LightSource;
 						}
 						else
 						{
-							border[index] = 3;
+							border[index] = lvl;
 						}
 					}
-				}
-			}
-		}
-
-		lvl = 0;
-		Task.Run(() =>
-		{
-			for (int step = 0; step < 7; step++)
-			{
-				// Создаём копию border
-				int[] borderCopy = new int[border.Length];
-				Buffer.BlockCopy(border, 0, borderCopy, 0, border.Length * sizeof(int));
-
-				for (int x = 0; x < chunkWidth; x++)
-				{
-					for (int y = heightUpdate2; y < heightUpdate; y++)
+					else
 					{
-						int index = x * chunkHeight + y;
-						int tileId = borderCopy[index];
-
-						if (tileId == (int)BlockId.LightSource || tileId == 0)
+						if (lvl == 2)
 						{
-							// Лево
-							if (x > 0)
+							if (tileId == (int)BlockId.Torch)
 							{
-								int iL = (x - 1) * chunkHeight + y;
-								// Проверяем, что сосед КАСАЕТСЯ воздуха (хотя бы один из его соседей — воздух)
-								if (TouchesAir(iL, chunkCurrent, chunkWidth, chunkHeight))
-									border[iL] = lvl;
+								border[index] = (int)BlockId.LightSource;
 							}
-
-							// Право
-							if (x < chunkWidth - 1)
+							else
 							{
-								int iR = (x + 1) * chunkHeight + y;
-								if (TouchesAir(iR, chunkCurrent, chunkWidth, chunkHeight))
-									border[iR] = lvl;
-							}
-
-							// Верх
-							if (y > 0)
-							{
-								int iUp = x * chunkHeight + (y - 1);
-								if (TouchesAir(iUp, chunkCurrent, chunkWidth, chunkHeight))
-									border[iUp] = lvl;
-							}
-
-							// Низ
-							if (y < chunkHeight - 1)
-							{
-								int iDown = x * chunkHeight + (y + 1);
-								if (TouchesAir(iDown, chunkCurrent, chunkWidth, chunkHeight))
-									border[iDown] = lvl;
+								border[index] = 3;
 							}
 						}
 					}
 				}
 			}
-		});
+
+			lvl = 0;
+			Task.Run(() =>
+			{
+				for (int step = 0; step < 5; step++)
+				{
+					// Создаём копию border
+					int[] borderCopy = new int[border.Length];
+					Buffer.BlockCopy(border, 0, borderCopy, 0, border.Length * sizeof(int));
+
+					for (int x = 0; x < chunkWidth; x++)
+					{
+						for (int y = heightUpdate2; y < heightUpdate; y++)
+						{
+							int index = x * chunkHeight + y;
+							int tileId = borderCopy[index];
+
+							if (tileId == (int)BlockId.LightSource || tileId == 0)
+							{
+								// Лево
+								if (x > 0)
+								{
+									int iL = (x - 1) * chunkHeight + y;
+									// Проверяем, что сосед КАСАЕТСЯ воздуха (хотя бы один из его соседей — воздух)
+									if (TouchesAir(iL, chunkCurrent, chunkWidth, chunkHeight))
+										border[iL] = lvl;
+								}
+
+								// Право
+								if (x < chunkWidth - 1)
+								{
+									int iR = (x + 1) * chunkHeight + y;
+									if (TouchesAir(iR, chunkCurrent, chunkWidth, chunkHeight))
+										border[iR] = lvl;
+								}
+
+								// Верх
+								if (y > 0)
+								{
+									int iUp = x * chunkHeight + (y - 1);
+									if (TouchesAir(iUp, chunkCurrent, chunkWidth, chunkHeight))
+										border[iUp] = lvl;
+								}
+
+								// Низ
+								if (y < chunkHeight - 1)
+								{
+									int iDown = x * chunkHeight + (y + 1);
+									if (TouchesAir(iDown, chunkCurrent, chunkWidth, chunkHeight))
+										border[iDown] = lvl;
+								}
+							}
+						}
+					}
+				}
+			});
+		}
 
 		// Проходим по столбцам 
 		for (int x = 0; x < chunkWidth; x++)

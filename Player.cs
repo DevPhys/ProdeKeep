@@ -111,7 +111,7 @@ public partial class Player : CharacterBody2D
 	}
 	public override void _Input(InputEvent ev)
 	{
-		if (ev is InputEventMouseButton mouseEvent && mouseEvent.Pressed)
+		if (ev is InputEventMouseButton mouseEvent && mouseEvent.Pressed && !isInventory)
 		{
 			bool isRange = false;
 

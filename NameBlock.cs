@@ -13,6 +13,9 @@ public partial class NameBlock : Label
 	int currentBlock;
 	Dictionary<int, string> nameBlocks = Storage.NameBlocks;
 
+	string oldtext = "";
+	string text = "";
+
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
@@ -22,6 +25,13 @@ public partial class NameBlock : Label
 	public override void _Process(double delta)
 	{
 		currentBlock = IventoryNode.currentBlock;
-		Text = $"{nameBlocks[currentBlock]}";
+		text = nameBlocks[currentBlock];
+
+		if (text != oldtext)
+		{
+			Text = text;
+		}
+
+		oldtext = text;
 	}
 }
