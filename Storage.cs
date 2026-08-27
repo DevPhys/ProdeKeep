@@ -80,16 +80,33 @@ public class Storage
 		{ (int)BlockId.DryBush, "Dry Bush" },
 		{ (int)BlockId.Torch, "Torch" },
 	};
-
-	// Ключ — (ID мира, Индекс чанка), Значение — массив байт этого чанка
 	public static ConcurrentDictionary<ChunkKey, byte[]> WorldMemory = new ConcurrentDictionary<ChunkKey, byte[]>();
+	// Ключ — (ID мира, Индекс чанка), Значение — массив байт этого чанка
 
 	public HashSet<int> TransparentBlocks;
 
 	public static int WorldSizeBlocks = 200000; // Длина мира
 	public static int NumWorld = 1; // Кол-во миров
-	public static int WorldH = 650; // глубина
+	public static int WorldH = 600; // глубина
 	public static int ChunkW = 25;  // Длина 1 чанка
+
+	public static string ClueInstructions = "V - hide/show instructions";
+	public static string ClueGame = "" +
+		"E - open/close inventory\n" +
+		"A - running left\n" +
+		"D - running right\n" +
+		"W - Jump\n" +
+		"ESC - exit\n" +
+		"Wheel scroll / keys 1-9 - \n" +
+		"replacing a block in the \n" +
+		"Hotbar\n\n" +
+		"RMB - place a block" +
+		"\nLMB - destroy the block";
+	public static string ClueInventory = "" +
+		"RMB - replace a block\n" +
+		"in the Hotbar\n" +
+		"LMB - select a block\n" +
+		"in the inventory";
 
 	public Storage ()
 	{

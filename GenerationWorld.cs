@@ -54,6 +54,33 @@ public class Generation
 
 	Noise noise = new Noise();
 
+	int SeedMap;
+	int[] p;
+
+	double[] waterNoise;  // Создаем карту вод
+	double[] carbonicNoise;  // Создаем карту появления угольной руды
+
+	double[] ironNoise;  // Создаем карту появления железной руды
+	double[] goldNoise;  // Создаем карту появления золотой руды
+	double[] copperNoise;  // Создаем карту появления медной руды
+
+	double[] aluminumNoise;  // Создаем карту появления алюминивой руды
+	double[] rubyNoise;  // Создаем карту появления рубиновой руды
+	double[] diamondNoise;  // Создаем карту появления алмазной руды
+
+	int[] permOaks;
+	int[] permCacti;
+	int[] permSpruce;
+
+	int seedMap;
+	double[] caveMap;
+	double[] caveMapLower;
+	double[] temperatureMap;  // Создаем карту температуры
+
+	double seedModifier;
+	int[] pChunk;
+	int[] worldHeightsBlocks;
+
 	public Generation()
 	{
 		// Запуск цикла генерации сида
@@ -110,124 +137,144 @@ public class Generation
 			0, FS, 0, 0, 0, 0, 0,
 			0, 0, 0, 0, 0, 0, 0,
 			];
+
+		SeedMap = NumberFromSeed(BasicNumber: 92, Factor: 3, Renge: (10, 99));
+		p = Perm(Seed: SeedMap * 10);
+
+		waterNoise = GenerateNoiseMap(Seed: SeedMap * 5);  // Создаем карту вод
+		carbonicNoise = GenerateNoiseMap(Seed: SeedMap + 100);  // Создаем карту появления угольной руды
+
+		ironNoise = GenerateNoiseMap(Seed: SeedMap + 200);  // Создаем карту появления железной руды
+		goldNoise = GenerateNoiseMap(Seed: SeedMap + 300);  // Создаем карту появления золотой руды
+		copperNoise = GenerateNoiseMap(Seed: SeedMap + 400);  // Создаем карту появления медной руды
+
+		aluminumNoise = GenerateNoiseMap(Seed: SeedMap + 500);  // Создаем карту появления алюминивой руды
+		rubyNoise = GenerateNoiseMap(Seed: SeedMap + 600);  // Создаем карту появления рубиновой руды
+		diamondNoise = GenerateNoiseMap(Seed: SeedMap + 700);  // Создаем карту появления алмазной руды
+
+		permOaks = Perm(Seed: 10);
+		permCacti = Perm(Seed: 11);
+		permSpruce = Perm(Seed: 12);
+
+		seedMap = NumberFromSeed(BasicNumber: 33, Factor: 7, Renge: (10, 99));
+		caveMap = GenerateNoiseMap(seedMap);
+		caveMapLower = GenerateNoiseMap(seedMap + 100);
+		temperatureMap = GenerateNoiseMap(Seed: seedMap * 100);  // Создаем карту температуры
+
+		long seedNumber = long.Parse(seed);
+		Random rand = new Random((int)((seedNumber) % int.MaxValue));
+		seedModifier = char.GetNumericValue(seed[4]) / 100.0;
+		if (seedModifier <= 0.02) seedModifier = 0.03;
+		if (seedModifier >= 0.06) seedModifier = 0.05;
+
+		pChunk = GenerateNoiseMap2(rand);
+		worldHeightsBlocks = GenerateH((563, pChunk));
 	}
-	public void CreationWorld()
+	public void CreationChunk(int NumChunk)
 	{
-		var watch = System.Diagnostics.Stopwatch.StartNew();
-		
+		//GD.Print($"Начинаем генерацию чанка №{NumChunk}");
+		//var watch = System.Diagnostics.Stopwatch.StartNew();
+
+		// Локальные переменные для каждого потока
+		ChunkKey localKey = new ChunkKey(0, NumChunk);
+
 		// Создаем базовый рельеф с пещерами и биомами
-		GenerationWorld();
+		GenerationChunk(NumChunk);
 
-		int SeedMap = NumberFromSeed(BasicNumber: 92, Factor: 3, Renge: (10, 99));
-		int[] p = Perm(Seed: SeedMap * 10);
-
-		int numsChunk = worldSizeBlocks / chunkHeightX;  // Находим количество чанков
-
-		double[] waterNoise = GenerateNoiseMap(Seed: SeedMap * 5);  // Создаем карту вод
-		double[] carbonicNoise = GenerateNoiseMap(Seed: SeedMap + 100);  // Создаем карту появления угольной руды
-
-		double[] ironNoise = GenerateNoiseMap(Seed: SeedMap + 200);  // Создаем карту появления железной руды
-		double[] goldNoise = GenerateNoiseMap(Seed: SeedMap + 300);  // Создаем карту появления золотой руды
-		double[] copperNoise = GenerateNoiseMap(Seed: SeedMap + 400);  // Создаем карту появления медной руды
-
-		double[] aluminumNoise = GenerateNoiseMap(Seed: SeedMap + 500);  // Создаем карту появления алюминивой руды
-		double[] rubyNoise = GenerateNoiseMap(Seed: SeedMap + 600);  // Создаем карту появления рубиновой руды
-		double[] diamondNoise = GenerateNoiseMap(Seed: SeedMap + 700);  // Создаем карту появления алмазной руды
-
-		int[] permOaks = Perm(Seed: 10);
-		int[] permCacti = Perm(Seed: 11);
-		int[] permSpruce = Perm(Seed: 12);
-
-		// Циклом перерисовываем мир, добавляя траву, руды, структуры и т.д.
-		Parallel.For(0, numsChunk, i =>
+		if (!worldMemory.TryGetValue(localKey, out byte[]? chunk))
 		{
-			// Локальные переменные для каждого потока
-			ChunkKey localKey = new ChunkKey(0, i);
+			GD.Print($"Чанк {NumChunk} пуст или не обнаружен");
+			return;
+		}
 
-			if (!worldMemory.TryGetValue(localKey, out byte[]? chunk))
-			{
-				GD.Print($"Чанк {i} пуст или не обнаружен");
-				return;
-			}
+		// Работаем с локальной копией
+		byte[] localChunk = chunk;
+		(ChunkKey Key, byte[] Chunk) main = (localKey, localChunk);
 
-			// Работаем с локальной копией
-			byte[] localChunk = chunk;
-			(ChunkKey Key, byte[] Chunk) main = (localKey, localChunk);
+		int i = NumChunk;
 
-			GenerationWater(waterNoise, i, main);  // Создаем озера
-			GenerationWaterSand(i, main);  // Создаем речной песок на дне озер
-			GenerationOre(carbonicNoise, p, i,
-				Frequency: (0.18, 0.68),
-				IDblock: (byte)BlockId.CarbonicOre,
-				Limit: LimitCarbonic, 
-				Main: main);  // Создаем жалежы уголя
+		GenerationWater(waterNoise, i, main);  // Создаем озера
+		GenerationWaterSand(i, main);  // Создаем речной песок на дне озер
+		GenerationOre(
+			mapNoise1D: carbonicNoise,
+			Permutation: p, i,
+			Frequency: (0.18, 0.68),
+			IDblock: (byte)BlockId.CarbonicOre,
+			Limit: LimitCarbonic,
+			Main: main);  // Создаем жалежы уголя
 
-			// Создаем металл
-			GenerationOre(ironNoise, p, i,
-				Frequency: (0.20, 0.75),
-				IDblock: (byte)BlockId.IronOre,
-				Limit: LimitIron,
-				Main: main);  // Создаем жалежы железа
-			GenerationOre(copperNoise, p, i,
-				Frequency: (0.20, 0.65),
-				IDblock: (byte)BlockId.CopperOre,
-				Limit: LimitCopper,
-				Main: main);  // Создаем жалежы меди
-			GenerationOre(aluminumNoise, p, i,
-				Frequency: (0.20, 0.50),
-				IDblock: (byte)BlockId.AluminumOre,
-				Limit: LimitAluminum,
-				Main: main);  // Создаем жалежы алюминия
+		// Создаем металл
+		GenerationOre(mapNoise1D: ironNoise,
+			Permutation: p, i,
+			Frequency: (0.20, 0.75),
+			IDblock: (byte)BlockId.IronOre,
+			Limit: LimitIron,
+			Main: main);  // Создаем жалежы железа
+		GenerationOre(mapNoise1D: copperNoise,
+			Permutation: p, i,
+			Frequency: (0.20, 0.65),
+			IDblock: (byte)BlockId.CopperOre,
+			Limit: LimitCopper,
+			Main: main);  // Создаем жалежы меди
+		GenerationOre(
+			mapNoise1D: aluminumNoise,
+			Permutation: p, i,
+			Frequency: (0.20, 0.50),
+			IDblock: (byte)BlockId.AluminumOre,
+			Limit: LimitAluminum,
+			Main: main);  // Создаем жалежы алюминия
 
-			// Создаем драгоценные камни
-			GenerationOre(rubyNoise, p, i,
-				Frequency: (0.15, 0.98),
-				IDblock: (byte)BlockId.RubyOre,
-				Limit: LimitRuby,
-				Main: main);  // Создаем жалежы рубина
-			GenerationOre(diamondNoise, p, i,
-				Frequency: (0.16, 0.91),
-				IDblock: (byte)BlockId.DiamondOre,
-				Limit: LimitDiamond,
-				Main: main);  // Создаем жалежы алмазов
-			GenerationOre(goldNoise, p, i,
-				Frequency: (0.17, 0.88),
-				IDblock: (byte)BlockId.GoldOre,
-				Limit: LimitGold,
-				Main: main);  // Создаем жалежы золота
+		// Создаем драгоценные камни
+		GenerationOre(mapNoise1D: rubyNoise,
+			Permutation: p, i,
+			Frequency: (0.15, 0.98),
+			IDblock: (byte)BlockId.RubyOre,
+			Limit: LimitRuby,
+			Main: main);  // Создаем жалежы рубина
+		GenerationOre(mapNoise1D: diamondNoise,
+			Permutation: p, i,
+			Frequency: (0.16, 0.91),
+			IDblock: (byte)BlockId.DiamondOre,
+			Limit: LimitDiamond,
+			Main: main);  // Создаем жалежы алмазов
+		GenerationOre(mapNoise1D: goldNoise,
+			Permutation: p, i,
+			Frequency: (0.17, 0.88),
+			IDblock: (byte)BlockId.GoldOre,
+			Limit: LimitGold,
+			Main: main);  // Создаем жалежы золота
 
-			// Создаем растительность
-			GenerationStructures(Index: i, Step: 5,
-				AllowedBlocks: (
-					[(byte)BlockId.Air, (byte)BlockId.Grass, (byte)BlockId.Earth],
-					[(byte)BlockId.Air],
-					[(byte)BlockId.Grass, (byte)BlockId.Earth]),
-				SizeStructure: (2, 5),
-				ListStructure: listTreesOaks,
-				Permutation: permOaks,
-				Main: main);  // Размещаем дубы
-			GenerationStructures(Index: i, Step: 5,
-				AllowedBlocks: (
-					[(byte)BlockId.Air],
-					[(byte)BlockId.Air],
-					[(byte)BlockId.Sand]),
-				SizeStructure: (2, 5),
-				ListStructure: listTreesСacti,
-				Permutation: permCacti,
-				Main: main);  // Размещаем кактусы
-			GenerationStructures(Index: i, Step: 7,
-				AllowedBlocks: (
-					[(byte)BlockId.Air, (byte)BlockId.Snow],
-					[(byte)BlockId.Air],
-					[(byte)BlockId.Snow, (byte)BlockId.Earth]),
-				SizeStructure: (4, 7),
-				ListStructure: listTreesSpruce,
-				Permutation: permSpruce,
-				Main: main);  // Размещаем ели
-		});
-		
-		watch.Stop();
-		GD.Print($"\nГотово! Время полной генерации: {watch.ElapsedMilliseconds / 1000.0} секунд");
+		// Создаем растительность
+		GenerationStructures(Index: i, Step: 5,
+			AllowedBlocks: (
+				[(byte)BlockId.Air, (byte)BlockId.Grass, (byte)BlockId.Earth],
+				[(byte)BlockId.Air],
+				[(byte)BlockId.Grass, (byte)BlockId.Earth]),
+			SizeStructure: (2, 5),
+			ListStructure: listTreesOaks,
+			Permutation: permOaks,
+			Main: main);  // Размещаем дубы
+		GenerationStructures(Index: i, Step: 5,
+			AllowedBlocks: (
+				[(byte)BlockId.Air],
+				[(byte)BlockId.Air],
+				[(byte)BlockId.Sand]),
+			SizeStructure: (2, 5),
+			ListStructure: listTreesСacti,
+			Permutation: permCacti,
+			Main: main);  // Размещаем кактусы
+		GenerationStructures(Index: i, Step: 7,
+			AllowedBlocks: (
+				[(byte)BlockId.Air, (byte)BlockId.Snow],
+				[(byte)BlockId.Air],
+				[(byte)BlockId.Snow, (byte)BlockId.Earth]),
+			SizeStructure: (4, 7),
+			ListStructure: listTreesSpruce,
+			Permutation: permSpruce,
+			Main: main);  // Размещаем ели
+
+		//watch.Stop();
+		//GD.Print($"\nГотово! Время генерации чанка №{NumChunk}: {watch.ElapsedMilliseconds / 1000.0} секунд");
 
 		// Обновляем
 		Storage.WorldMemory = worldMemory;
@@ -312,15 +359,15 @@ public class Generation
 		worldMemory[Main.Key] = Main.Chunk;
 	}
 
-	private void GenerationOre(double[] CarbonicNoise, int[] Permutation, int Index, int IDblock, (double f, double p) Frequency, (int Upper, int Lower) Limit, (ChunkKey Key, byte[] Chunk) Main)
+	private void GenerationOre(double[] mapNoise1D, int[] Permutation, int Index, int IDblock, (double f, double p) Frequency, (int Upper, int Lower) Limit, (ChunkKey Key, byte[] Chunk) Main)
 	{
 		int chunkOffsetX = Index * chunkHeightX;
 
 		for (int x = 0; x < chunkHeightX; x++)
 		{
 			int worldX = chunkOffsetX + x;
-			int carbonicUpperLimit = Limit.Upper + (int)(CarbonicNoise[worldX] * 5);
-			int carbonicLowerLimit = Limit.Lower + (int)(CarbonicNoise[worldX] * 4);
+			int carbonicUpperLimit = Limit.Upper + (int)(mapNoise1D[worldX] * 5);
+			int carbonicLowerLimit = Limit.Lower + (int)(mapNoise1D[worldX] * 4);
 
 			// Защита от выхода за границы мира
 			carbonicUpperLimit = Math.Max(carbonicUpperLimit, 0);
@@ -424,118 +471,83 @@ public class Generation
 		worldMemory[Main.Key] = Main.Chunk;
 	}
 
-	private void GenerationWorld()
+	private void GenerationChunk(int NumChunk)
 	{
-		var watch = System.Diagnostics.Stopwatch.StartNew();
+		// Заполнение чанк байтами
+		byte[] chunk = new byte[chunkHeightX * worldHeightY];
 
-		int seedMap = NumberFromSeed(BasicNumber: 33, Factor: 7, Renge: (10, 99));
-		double[] caveMap = GenerateNoiseMap(seedMap);
-		double[] caveMapLower = GenerateNoiseMap(seedMap + 100);
-		double[] temperatureMap = GenerateNoiseMap(Seed: seedMap * 100);  // Создаем карту температуры
-
-		Parallel.For(0, numWorld, worldId =>
+		Parallel.For(NumChunk * chunkHeightX, NumChunk * chunkHeightX + chunkHeightX, x =>
 		{
-			long seedNumber = long.Parse(seed);
-			Random rand = new Random((int)((seedNumber + worldId) % int.MaxValue));
-			double seedModifier = char.GetNumericValue(seed[4]) / 100.0;
-			if (seedModifier <= 0.02) seedModifier = 0.03;
-			if (seedModifier >= 0.06) seedModifier = 0.05;
+			// x - это мировая координата
+			int localX = x - (NumChunk * chunkHeightX); // Локальная координата для записи в chunk
+			int surfaceY = worldHeightsBlocks[x];
+			int xOffset = localX * worldHeightY;
 
-			double offsetX = rand.NextDouble() * 1000.0;
-			double offsetY = rand.NextDouble() * 1000.0;
-			double worldOffset = worldId * 5000.0;
-
-			int[] p = GenerateNoiseMap2(rand);
-			int[] worldHeightsBlocks = GenerateH((worldOffset, p));
-
-			// Заполнение мира байтами
-			byte[] entireWorldBytes = new byte[worldSizeBlocks * worldHeightY];
-
-			Parallel.For(0, worldSizeBlocks, x =>
+			for (int y = 0; y < worldHeightY; y++)
 			{
-				int surfaceY = worldHeightsBlocks[x];
-				int xOffset = x * worldHeightY;
+				int blockIdx = xOffset + y;
+				int caveStartY = surfaceY + upperLimitCave.Upper + (int)(caveMap[x] * upperLimitCave.Lower);
+				int caveStartY2 = surfaceY + lowerLimitCave.Upper + (int)(caveMapLower[x] * lowerLimitCave.Lower);
 
-				for (int y = 0; y < worldHeightY; y++)
+				if (y < surfaceY)
+					chunk[blockIdx] = 0;
+				else if (y <= surfaceY + layerThicknessEarth)  // Пропускаем слой земли
 				{
-					int blockIdx = xOffset + y;
-					int caveStartY = surfaceY + upperLimitCave.Upper + (int)(caveMap[x] * upperLimitCave.Lower); 
-					int caveStartY2 = surfaceY + lowerLimitCave.Upper + (int)(caveMapLower[x] * lowerLimitCave.Lower);
+					// Ничего не делаем — уже покрашено
+				}
+				else if (y <= caveStartY)
+					chunk[blockIdx] = 1;
+				else if (y >= caveStartY2)
+					chunk[blockIdx] = 1;
+				else
+				{
+					double sampleX = x;  // Используем мировую координату x для шума
+					double sampleY = y;
+					double noise1 = noise.PerlinNoise2D(sampleX / 180.0, sampleY / 90.0, p) * 1.0;
+					double noise2 = noise.PerlinNoise2D(sampleX / 60.0, sampleY / 40.0, p) * 0.4;
+					double noise3 = noise.PerlinNoise2D(sampleX / 15.0, sampleY / 10.0, p) * 0.1;
+					double finalNoise = (noise1 + noise2 + noise3) / 1.65;
 
-
-					if (y < surfaceY)
-						entireWorldBytes[blockIdx] = 0;
-					else if (y <= surfaceY + layerThicknessEarth)  // Пропускаем слой земли
-					{
-						// Ничего не делаем — уже покрашено
-					}
-					else if (y <= caveStartY)
-						entireWorldBytes[blockIdx] = 1;
-					else if (y >= caveStartY2)
-						entireWorldBytes[blockIdx] = 1;
+					if (finalNoise > seedModifier * -1 && finalNoise < seedModifier)
+						chunk[blockIdx] = 0;
 					else
+						chunk[blockIdx] = 1;
+				}
+
+				if (y == surfaceY)
+				{
+					double temperature = temperatureMap[x];  // Используем мировую координату x
+
+					if (temperature >= 0.8)
+						chunk[blockIdx] = (byte)BlockId.Sand;
+					else if (temperature <= 0.2)
+						chunk[blockIdx] = (byte)BlockId.Snow;
+					else
+						chunk[blockIdx] = (byte)BlockId.Grass;
+
+					for (int i = 1; i <= layerThicknessEarth; i++)
 					{
-						double sampleX = x + offsetX;
-						double sampleY = y + offsetY;
-						double noise1 = noise.PerlinNoise2D(sampleX / 180.0, sampleY / 90.0, p) * 1.0;
-						double noise2 = noise.PerlinNoise2D(sampleX / 60.0, sampleY / 40.0, p) * 0.4;
-						double noise3 = noise.PerlinNoise2D(sampleX / 15.0, sampleY / 10.0, p) * 0.1;
-						double finalNoise = (noise1 + noise2 + noise3) / 1.65;
+						int dirtIndex = xOffset + (y + i);  // xOffset уже локальный
 
-						if (finalNoise > seedModifier * -1 && finalNoise < seedModifier)
-							entireWorldBytes[blockIdx] = 0;
-						else
-							entireWorldBytes[blockIdx] = 1;
-					}
-
-					if (y == surfaceY)
-					{
-						double temperature = temperatureMap[x];
-
-						if (temperature >= 0.8)
-							entireWorldBytes[blockIdx] = (byte)BlockId.Sand;
-						else if (temperature <= 0.2)
-							entireWorldBytes[blockIdx] = (byte)BlockId.Snow;
-						else
-							entireWorldBytes[blockIdx] = (byte)BlockId.Grass;
-
-
-						for (int i = 1; i <= layerThicknessEarth; i++)
+						// Проверка границ
+						if (dirtIndex < chunk.Length)
 						{
-							int dirtIndex = xOffset + (y + i);
-
 							if (temperature >= 0.8)
 							{
-								entireWorldBytes[dirtIndex] = (byte)BlockId.Sand;
+								chunk[dirtIndex] = (byte)BlockId.Sand;
 							}
 							else
 							{
-								entireWorldBytes[dirtIndex] = (byte)BlockId.Earth;
+								chunk[dirtIndex] = (byte)BlockId.Earth;
 							}
 						}
 					}
-
-					//entireWorldBytes = GenerationBlocks(temperatureMap, Indexs: (blockIdx, xOffset + y + 1), entireWorldBytes, Pos: (x, y));
 				}
-			});
-
-			// ========== Нарезка на чанки ==========
-			int totalChunksToSave = worldSizeBlocks / chunkHeightX;
-			int bytesPerChunk = chunkHeightX * worldHeightY;
-
-			Parallel.For(0, totalChunksToSave, chunkIdx =>
-			{
-				byte[] binaryChunk = new byte[bytesPerChunk];
-				int sourceOffset = chunkIdx * bytesPerChunk;
-				Buffer.BlockCopy(entireWorldBytes, sourceOffset, binaryChunk, 0, bytesPerChunk);
-
-				ChunkKey key = new ChunkKey(worldId, chunkIdx);
-				worldMemory.TryAdd(key, binaryChunk);
-			});
+			}
 		});
 
-		watch.Stop();
-		GD.Print($"\nГотово! Время генериции №1: {watch.ElapsedMilliseconds / 1000.0} секунд");
+		ChunkKey key = new ChunkKey(0, NumChunk);
+		worldMemory.TryAdd(key, chunk);
 	}
 
 	private static int NumberFromSeed((int MinNum, int MaxNum) Renge, int BasicNumber = 0, int Factor = 1)

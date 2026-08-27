@@ -2,6 +2,7 @@ using Godot;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 
 using BlockId = Storage.BlockId;
 
@@ -16,8 +17,8 @@ public partial class WorldRenderer : TileMapLayer
 
 	Vector2 playerPos;
 
-	Generation generation;
 	Storage _storage = new Storage();
+	Generation generation = new Generation();
 
 	HashSet<int> transparentBlocks;
 
@@ -33,9 +34,6 @@ public partial class WorldRenderer : TileMapLayer
 
 	public override void _Ready()
 	{
-		generation = new Generation(); 
-		generation.CreationWorld(); 
-
 		screenWidth = (int)DisplayServer.WindowGetSize().X;
 		screenHeight = (int)DisplayServer.WindowGetSize().Y;
 
@@ -70,13 +68,6 @@ public partial class WorldRenderer : TileMapLayer
 
 	private void GenerateAndRenderWorld(ConcurrentDictionary<ChunkKey, byte[]> worldData)
 	{
-		// Проверяем на наличее чанков
-		if (worldData.Count == 0)
-		{
-			GD.PrintErr("словарь пуст");
-			return;
-		}
-
 		// Сохраняем старые чанки
 		oldChunkKeys.Clear();
 		oldChunkKeys.AddRange(listChunkKey);
@@ -101,9 +92,17 @@ public partial class WorldRenderer : TileMapLayer
 			if (!oldChunkKeys.Contains(key))
 			{
 				// Рисуем только если это новый чанк
+				generation.CreationChunk(key.ChunkIdx);
+				worldData = Storage.WorldMemory;
 				GenerateChunk(key);
 			}
 		}
+		// Проверяем на наличее чанков
+		if (worldData.Count == 0)
+		{
+			GD.PrintErr("словарь пуст");
+		}
+
 	}
 	private void SpecificChunks()
 	{
@@ -117,8 +116,7 @@ public partial class WorldRenderer : TileMapLayer
 			if (chunkIndex < 0) continue;
 
 			var key = new ChunkKey(0, chunkIndex);
-			if (Storage.WorldMemory.ContainsKey(key))
-				listChunkKey.Add(key);
+			listChunkKey.Add(key);
 		}
 	}
 
@@ -153,7 +151,6 @@ public partial class WorldRenderer : TileMapLayer
 			for (int x = 0; x < chunkWidth; x++)
 			{
 				lvl = 0;
-
 				for (int y = 0; y < chunkHeight; y++)
 				{
 					int index = x * chunkHeight + y;
@@ -198,7 +195,7 @@ public partial class WorldRenderer : TileMapLayer
 			lvl = 0;
 			Task.Run(() =>
 			{
-				for (int step = 0; step < 5; step++)
+				for (int step = 0; step < 10; step++)
 				{
 					// Создаём копию border
 					int[] borderCopy = new int[border.Length];
@@ -279,10 +276,7 @@ public partial class WorldRenderer : TileMapLayer
 			}
 		}
 
-		for (int i = 0; i < positions.Count; i++)
-		{
-			SetCell(positions[i], 0, atlasCoordsArray[i]);
-		}
+		FastMassUpdate(positions, atlasCoordsArray);
 	}
 	private void ClearChunk(ChunkKey key)
 	{
@@ -309,7 +303,6 @@ public partial class WorldRenderer : TileMapLayer
 		GenerateChunk(key);
 	}
 
-	// Функция проверки: касается ли блок воздуха
 	private bool TouchesAir(int index, byte[] chunk, int chunkWidth, int chunkHeight)
 	{
 		int x = index / chunkHeight;
@@ -326,5 +319,13 @@ public partial class WorldRenderer : TileMapLayer
 			return true;
 
 		return false;
+	}
+	public void FastMassUpdate(Godot.Collections.Array<Vector2I> positions, Godot.Collections.Array<Vector2I> atlasCoordsArray)
+	{
+		for (int i = 0; i < positions.Count; i++)
+		{
+			// Прямая и точечная установка без посредников
+			SetCell(positions[i], sourceId: 0, atlasCoordsArray[i]);
+		}
 	}
 }
