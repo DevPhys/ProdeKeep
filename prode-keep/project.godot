@@ -1,0 +1,57 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=5
+
+[application]
+
+config/name="ProbeKeep"
+run/main_scene="uid://daufekjr7qd8t"
+config/features=PackedStringArray("4.7", "C#", "Forward Plus")
+config/icon="uid://b2voy3udakp7t"
+
+[display]
+
+window/size/mode=3
+window/stretch/mode="canvas_items"
+
+[dotnet]
+
+project/assembly_name="ProbeKeep"
+
+[file_customization]
+
+folder_colors={
+"res://Asset/Atlass/": "purple",
+"res://Asset/Enemys/": "red",
+"res://Asset/Inventory/": "gray",
+"res://Asset/Player/": "green",
+"res://Objects/Iventory/Hotbar/": "red",
+"res://Objects/Iventory/Inventory/": "blue"
+}
+
+[navigation]
+
+2d/navigation_engine="GodotNavigation2D"
+
+[physics]
+
+2d/physics_engine="GodotPhysics2D"
+3d/physics_engine="Jolt Physics"
+
+[rendering]
+
+textures/canvas_textures/default_texture_filter=0
+rendering_device/driver.windows="d3d12"
+renderer/rendering_method="mobile"
+driver/threads/thread_model=0
+lights_and_shadows/use_physical_light_units=true
+textures/decals/filter=0
+textures/light_projectors/filter=0
+environment/defaults/default_clear_color=Color(0.1882353, 0.8352941, 0.9254902, 1)
+occlusion_culling/use_occlusion_culling=true

@@ -1,0 +1,127 @@
+[gd_scene format=3 uid="uid://daufekjr7qd8t"]
+
+[ext_resource type="Script" uid="uid://ul2vh64knxlo" path="res://Objects/GamePlay/Gameplayer.cs" id="1_q4i2k"]
+[ext_resource type="Texture2D" uid="uid://kqj5m05ll333" path="res://Asset/Atlass/Atlas.png" id="2_jrgi8"]
+[ext_resource type="Script" uid="uid://cbpl78ub0cm3f" path="res://Objects/World/WorldRenderer.cs" id="3_27352"]
+[ext_resource type="Script" uid="uid://dy173vjel0mna" path="res://Objects/GamePlay/DataLoading.cs" id="3_exco4"]
+[ext_resource type="Script" uid="uid://c10glhw1qqnpd" path="res://Objects/Player/CameraPlayer.cs" id="4_q4i2k"]
+[ext_resource type="PackedScene" uid="uid://bldw34pc1oqmx" path="res://Objects/Player/Player.tscn" id="5_q4i2k"]
+[ext_resource type="Script" uid="uid://c4oeqxn2gnpru" path="res://Objects/FPS/FpsCounter.cs" id="6_4i1n7"]
+[ext_resource type="PackedScene" uid="uid://cg1tuqn7y6ta2" path="res://Objects/Iventory/Iventory.tscn" id="7_jrgi8"]
+[ext_resource type="Script" uid="uid://b3uyfonhfw5gp" path="res://Objects/GamePlay/Clue.cs" id="9_pjgq7"]
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_k2aq1"]
+texture = ExtResource("2_jrgi8")
+0:0/0 = 0
+1:0/0 = 0
+1:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+3:0/0 = 0
+3:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+4:0/0 = 0
+4:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+5:0/0 = 0
+6:0/0 = 0
+6:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+7:0/0 = 0
+7:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+8:0/0 = 0
+9:0/0 = 0
+0:1/0 = 0
+0:1/0/physics_layer_0/polygon_0/points = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+1:1/0 = 0
+1:1/0/physics_layer_0/polygon_0/points = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+2:1/0 = 0
+2:1/0/physics_layer_0/polygon_0/points = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+3:1/0 = 0
+3:1/0/physics_layer_0/polygon_0/points = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+4:1/0 = 0
+4:1/0/physics_layer_0/polygon_0/points = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+5:1/0 = 0
+5:1/0/physics_layer_0/polygon_0/points = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+6:1/0 = 0
+6:1/0/physics_layer_0/polygon_0/points = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+0:2/0 = 0
+1:2/0 = 0
+0:3/0 = 0
+1:3/0 = 0
+6:2/0 = 0
+7:1/0 = 0
+8:1/0 = 0
+9:1/0 = 0
+2:2/0 = 0
+3:2/0 = 0
+4:2/0 = 0
+5:2/0 = 0
+2:3/0 = 0
+3:3/0 = 0
+4:3/0 = 0
+5:3/0 = 0
+6:3/0 = 0
+7:3/0 = 0
+7:2/0 = 0
+8:2/0 = 0
+8:3/0 = 0
+9:3/0 = 0
+9:3/0/physics_layer_0/polygon_0/points = PackedVector2Array(-8, -8, -8, 8, 8, 8, 8, -8)
+9:2/0 = 0
+2:0/0 = 0
+2:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+
+[sub_resource type="TileSet" id="TileSet_k2aq1"]
+occlusion_layer_0/light_mask = 1
+occlusion_layer_0/sdf_collision = true
+physics_layer_0/collision_layer = 1
+sources/0 = SubResource("TileSetAtlasSource_k2aq1")
+
+[sub_resource type="LabelSettings" id="LabelSettings_58igv"]
+
+[node name="Gameplay" type="Node2D" unique_id=843746850 node_paths=PackedStringArray("_player")]
+script = ExtResource("1_q4i2k")
+_player = NodePath("Player")
+
+[node name="LoadData" type="Node" parent="." unique_id=748449045]
+script = ExtResource("3_exco4")
+
+[node name="World" type="TileMapLayer" parent="." unique_id=1167110597 node_paths=PackedStringArray("_camera", "_player")]
+tile_set = SubResource("TileSet_k2aq1")
+script = ExtResource("3_27352")
+_camera = NodePath("../Camera2D")
+_player = NodePath("../Player")
+
+[node name="Player" parent="." unique_id=574582331 node_paths=PackedStringArray("worldRenderer") instance=ExtResource("5_q4i2k")]
+position = Vector2(39, 19)
+Speed = 120.0
+SwingSpeed = 9.0
+JumpVelocity = -200.0
+Gravity = 900.0
+worldRenderer = NodePath("../World")
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=1042839345 node_paths=PackedStringArray("_player")]
+z_index = 1
+position = Vector2(587, 321)
+limit_enabled = false
+script = ExtResource("4_q4i2k")
+_player = NodePath("../Player")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=2139021385]
+
+[node name="FPS" type="Label" parent="CanvasLayer" unique_id=972181974 node_paths=PackedStringArray("_player")]
+offset_left = -40.0
+offset_top = 328.0
+offset_right = 112.0
+offset_bottom = 360.0
+theme_override_font_sizes/font_size = 30
+label_settings = SubResource("LabelSettings_58igv")
+script = ExtResource("6_4i1n7")
+_player = NodePath("../../Player")
+
+[node name="Clue" type="Label" parent="CanvasLayer" unique_id=322224799]
+offset_left = 910.0
+offset_top = 1.0
+offset_right = 1148.0
+offset_bottom = 306.0
+script = ExtResource("9_pjgq7")
+
+[node name="Inventory" parent="." unique_id=728962376 instance=ExtResource("7_jrgi8")]
+position = Vector2(-96, 77)
+scale = Vector2(2, 2)

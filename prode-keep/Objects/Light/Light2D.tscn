@@ -1,0 +1,26 @@
+[gd_scene format=3 uid="uid://smwrl2g82ity"]
+
+[ext_resource type="Script" uid="uid://c2fvothhs7v1c" path="res://Objects/GamePlay/Light.cs" id="1_i5y8k"]
+[ext_resource type="Texture2D" uid="uid://bcom7tstvvlax" path="res://new_gradient_texture_2d.tres" id="1_ju1cg"]
+[ext_resource type="Script" uid="uid://bdsumna441x3q" path="res://Objects/GamePlay/Light2d.cs" id="3_a146r"]
+
+[node name="Node2D" type="Node2D" unique_id=2026829679]
+
+[node name="CanvasModulate" type="CanvasModulate" parent="." unique_id=1237014323 node_paths=PackedStringArray("_player")]
+position = Vector2(598, -3.999999)
+scale = Vector2(0.99999994, 0.99999994)
+color = Color(0, 0, 0, 1)
+script = ExtResource("1_i5y8k")
+_player = NodePath("")
+
+[node name="PointLight2D" type="PointLight2D" parent="." unique_id=607562758 node_paths=PackedStringArray("_player")]
+position = Vector2(687, 4.000004)
+scale = Vector2(10, 10)
+blend_mode = 2
+shadow_enabled = true
+shadow_filter = 2
+shadow_filter_smooth = 15.0
+texture = ExtResource("1_ju1cg")
+offset = Vector2(10, 10)
+script = ExtResource("3_a146r")
+_player = NodePath("")
