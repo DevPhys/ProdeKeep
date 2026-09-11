@@ -6,11 +6,15 @@ public partial class NumBlocks : Node2D
 	[Export] private float _scaleMap = 1.61f;
 	[Export] private int fontSize = 11;
 	[Export] private float tileSize = 16.0f;
+	[Export] private bool isHotbar = false;
 
 	private Font font;
 
 	private int heightInventory = Storage.HightInventory; // Высота инвентаря
-	List<(int IdBlock, int NumBlocks)> ListBlocksInventory = Storage.ListBlocksInventory;
+	private int heightHotbar = 1;
+
+	List <(int IdBlock, int NumBlocks)> ListBlocksInventory = Storage.ListBlocksInventory;
+	List<(int IdBlock, int NumBlocks)> ListBlocksHotbar = Storage.ListBlocksHotbar;
 
 	bool isDraw = false;
 	bool isInventory = Gameplayer.isInventory; bool isInventoryOld = Gameplayer.isInventory;
@@ -26,49 +30,66 @@ public partial class NumBlocks : Node2D
 
 	public override void _Process(double delta)
 	{
-		ListBlocksInventory = Storage.ListBlocksInventory;
-		isInventory = Gameplayer.isInventory;
-
-		if (ListBlocksInventory.Count == 0)
+		if (!isHotbar)
 		{
-			GD.Print($"Список инвенторя пуст. Длина этого списка: {ListBlocksInventory.Count}");
-			return;
-		}
+			ListBlocksInventory = Storage.ListBlocksInventory;
+			isInventory = Gameplayer.isInventory;
 
-		if (isInventory != isInventoryOld)
+			if (ListBlocksInventory.Count == 0)
+			{
+				GD.Print($"Список инвенторя пуст. Длина этого списка: {ListBlocksInventory.Count}");
+				return;
+			}
+
+			if (isInventory != isInventoryOld)
+			{
+				if (isInventory)
+				{
+					isDraw = true;
+				}
+				else
+				{
+					isDraw = false;
+				}
+			}
+
+			Refresh();
+			isInventoryOld = isInventory;
+		}
+		else
 		{
-			if (isInventory)
-			{
-				isDraw = true;
-			}
-			else
-			{
-				isDraw = false;
-			}
-		}
+			ListBlocksHotbar = Storage.ListBlocksHotbar;
+			isDraw = true;
 
-		Refresh();
-		isInventoryOld = isInventory;
+			Refresh();
+		}
 	}
 
 	public override void _Draw()
 	{
+		if (!isHotbar)
+			Draw(ListBlocksInventory, heightInventory);
+		else
+			Draw(ListBlocksHotbar, heightHotbar);
+	}
+	private void Draw(List<(int IdBlock, int NumBlocks)> ListBlocks, int H)
+	{
 		if (!isDraw) return;
 
-		for (int i = 0; i < ListBlocksInventory.Count; i++)
+		for (int i = 0; i < ListBlocks.Count; i++)
 		{
-			var item = ListBlocksInventory[i];
+			var item = ListBlocks[i];
 			if (item.NumBlocks <= 1) continue;
-			
-			int x = i / heightInventory;
-			int y = i % heightInventory;
-			
+
+			int x = i / H;
+			int y = i % H;
+
 			var text = item.NumBlocks.ToString();
 			var drawPos = new Vector2(
 				(x + 0.8f) * tileSize,
 				(y + 0.8f) * tileSize
 			);
-			
+
 			// Основной текст
 			DrawString(font, drawPos, text,
 				HorizontalAlignment.Right, -1, fontSize, new Color(0, 0, 0));

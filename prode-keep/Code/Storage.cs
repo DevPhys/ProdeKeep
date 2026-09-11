@@ -81,7 +81,13 @@ public class Storage
 			(int)BlockId.Torch,
 			(int)BlockId.Null,
 		};
-	public static Dictionary<int, string> NameBlocks = new Dictionary<int, string> {
+	public static HashSet<int> NoDropBlocks = new HashSet<int> { 
+			(int)BlockId.Null,
+			(int)BlockId.Air,
+			(int)BlockId.DarknessIdForBlocks,
+			(int)BlockId.PenumbraIdForAir,
+			(int)BlockId.DarknessIdForAir};
+    public static Dictionary<int, string> NameBlocks = new Dictionary<int, string> {
 		{ (int)BlockId.Air, "Air" },
 		{ (int)BlockId.Null, ""  },
 		{ (int)BlockId.Water, "Water" },

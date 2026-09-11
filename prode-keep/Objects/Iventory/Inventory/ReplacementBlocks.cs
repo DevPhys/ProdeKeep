@@ -8,8 +8,9 @@ public partial class ReplacementBlocks : Node
 	[Export] public TileMapLayer _map;
 	[Export] public Sprite2D _block;
 	[Export] public Label _numBlock;
+    [Export] public Label _nameBlock;
 
-	[Export] public int startXInventory = 13;
+    [Export] public int startXInventory = 13;
 	[Export] public int endXInventory = 33;
 	[Export] public int startYInventory = 9;
 	[Export] public int endYInventory = 17;
@@ -33,7 +34,16 @@ public partial class ReplacementBlocks : Node
 
 	public override void _Process(double delta)
 	{
-		if (!redrawing) return;
+        for (int i = 0; i < Storage.ListBlocksHotbar.Count; i++)
+        {
+            if (Storage.ListBlocksHotbar[i].NumBlocks <= 0 && Storage.ListBlocksHotbar[i].IdBlock != (int)BlockId.Null)
+			{
+				Storage.ListBlocksHotbar[i] = ((int)BlockId.Null, 0);
+				_nameBlock.Text = "";
+            }
+        }
+
+        if (!redrawing) return;
 
 		if (storageDevice == timeRedrawing)
 			redrawing = false;
@@ -60,9 +70,15 @@ public partial class ReplacementBlocks : Node
 					return; // клик по пустой клетке
 				}
 
-				Re_recording(tileCoords, (int)BlockId.Null, 0);
+				bool bl = Re_recording(tileCoords, (int)BlockId.Null, 0);
+                if (!bl)
+                {
+                    _block.Texture = null;
+                    idBlock = (int)BlockId.Null;
+                    _numBlock.Text = "";
+                }
 
-				redrawing = true;
+                redrawing = true;
 				storageDevice = 0;
 
 				_block.Texture = main.Texture;
@@ -89,7 +105,14 @@ public partial class ReplacementBlocks : Node
 				else
 				{
 					var main = GetTextureAtCell(tileCoords);
-					Re_recording(tileCoords, idBlock, numBlocks);
+					bool bl = Re_recording(tileCoords, idBlock, numBlocks);
+
+					if (!bl)
+					{
+                        _block.Texture = null;
+                        idBlock = (int)BlockId.Null;
+                        _numBlock.Text = "";
+                    }
 
 					_block.Texture = main.Texture;
 					if (numBlocks > 1)
@@ -132,7 +155,7 @@ public partial class ReplacementBlocks : Node
 
 		return (null, (int)BlockId.Null);
 	}
-	private void Re_recording(Vector2I cellCoords, int BlockId, int NumBlocks)
+	private bool Re_recording(Vector2I cellCoords, int BlockId, int NumBlocks)
 	{
 		int localX = cellCoords.X;
 		int localY = cellCoords.Y;
@@ -148,7 +171,7 @@ public partial class ReplacementBlocks : Node
 			(int IdBlock, int NumBloks) mainBlock = (BlockId, NumBlocks);
 			Storage.ListBlocksInventory[index] = mainBlock;
 
-			return;
+			return true;
 		}
 		else if (localX >= startXHotbar &&
 				 localX <= endXHotbar &&
@@ -161,9 +184,10 @@ public partial class ReplacementBlocks : Node
 			Storage.ListBlocksHotbar[index] = mainBlock;
 			HotbarPointer.currentBlock = Storage.ListBlocksHotbar[HotbarPointer.currentIndex].IdBlock;
 
-			return;
+			return true;
 		}
 
 		numBlocks = 0;
+		return false;
 	}
 }

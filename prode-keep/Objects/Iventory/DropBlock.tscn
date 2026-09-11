@@ -1,0 +1,17 @@
+[gd_scene format=3 uid="uid://dno4u54506e4h"]
+
+[ext_resource type="Script" uid="uid://c04ojj4q1emnc" path="res://Objects/Iventory/DropBlock.cs" id="1_qewkm"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_qewkm"]
+size = Vector2(10, 10)
+
+[node name="Drope" type="CharacterBody2D" unique_id=1459573949]
+collision_layer = 2
+collision_mask = 2
+script = ExtResource("1_qewkm")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1663416328]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1812826936]
+scale = Vector2(0.6, 0.6)
+shape = SubResource("RectangleShape2D_qewkm")

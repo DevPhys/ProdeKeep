@@ -32,7 +32,7 @@ public partial class HotbarDraw : Node
 
 		for (int i = 0; i < numSlots; i++)
 		{
-			if (listBlocks[i].IdBlock != listBlocksOld[i].IdBlock)
+			if (listBlocks[i].IdBlock != listBlocksOld[i].IdBlock || listBlocks[i].NumBlocks != listBlocksOld[i].NumBlocks)
 			{
 				_map.SetCell(new Vector2I(i + biasX, biasY), 0, new Vector2I(listBlocks[i].IdBlock % 10, listBlocks[i].IdBlock / 10));
 			}

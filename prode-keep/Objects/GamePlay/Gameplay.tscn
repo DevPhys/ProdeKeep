@@ -7,6 +7,7 @@
 [ext_resource type="Script" uid="uid://c10glhw1qqnpd" path="res://Objects/Player/CameraPlayer.cs" id="4_q4i2k"]
 [ext_resource type="PackedScene" uid="uid://bldw34pc1oqmx" path="res://Objects/Player/Player.tscn" id="5_q4i2k"]
 [ext_resource type="Script" uid="uid://c4oeqxn2gnpru" path="res://Objects/FPS/FpsCounter.cs" id="6_4i1n7"]
+[ext_resource type="PackedScene" uid="uid://dno4u54506e4h" path="res://Objects/Iventory/DropBlock.tscn" id="6_exco4"]
 [ext_resource type="PackedScene" uid="uid://cg1tuqn7y6ta2" path="res://Objects/Iventory/Iventory.tscn" id="7_jrgi8"]
 [ext_resource type="Script" uid="uid://b3uyfonhfw5gp" path="res://Objects/GamePlay/Clue.cs" id="9_pjgq7"]
 
@@ -70,7 +71,8 @@ texture = ExtResource("2_jrgi8")
 [sub_resource type="TileSet" id="TileSet_k2aq1"]
 occlusion_layer_0/light_mask = 1
 occlusion_layer_0/sdf_collision = true
-physics_layer_0/collision_layer = 1
+physics_layer_0/collision_layer = 3
+physics_layer_0/collision_mask = 3
 sources/0 = SubResource("TileSetAtlasSource_k2aq1")
 
 [sub_resource type="LabelSettings" id="LabelSettings_58igv"]
@@ -88,13 +90,16 @@ script = ExtResource("3_27352")
 _camera = NodePath("../Camera2D")
 _player = NodePath("../Player")
 
-[node name="Player" parent="." unique_id=574582331 node_paths=PackedStringArray("worldRenderer") instance=ExtResource("5_q4i2k")]
+[node name="Player" parent="." unique_id=574582331 node_paths=PackedStringArray("worldRenderer", "_map", "_world") instance=ExtResource("5_q4i2k")]
 position = Vector2(39, 19)
 Speed = 120.0
 SwingSpeed = 9.0
 JumpVelocity = -200.0
 Gravity = 900.0
 worldRenderer = NodePath("../World")
+_map = NodePath("../World")
+_blockScene = ExtResource("6_exco4")
+_world = NodePath("..")
 
 [node name="Camera2D" type="Camera2D" parent="." unique_id=1042839345 node_paths=PackedStringArray("_player")]
 z_index = 1

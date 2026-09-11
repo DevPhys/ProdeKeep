@@ -67,11 +67,12 @@ sources/0 = SubResource("TileSetAtlasSource_5ldmc")
 script = ExtResource("1_ipyjm")
 pointer = NodePath("../CanvasLayer/Sprite2D")
 
-[node name="InventoryUpdate" type="Node" parent="." unique_id=1994353075 node_paths=PackedStringArray("_map", "_block", "_numBlock")]
+[node name="InventoryUpdate" type="Node" parent="." unique_id=1994353075 node_paths=PackedStringArray("_map", "_block", "_numBlock", "_nameBlock")]
 script = ExtResource("4_3pj0a")
 _map = NodePath("../CanvasLayer/Inventory")
 _block = NodePath("../CanvasLayer/Block")
 _numBlock = NodePath("../CanvasLayer/BlockNum")
+_nameBlock = NodePath("../CanvasLayer/NameBlock")
 
 [node name="HotbarDraw" type="Node" parent="." unique_id=282828508 node_paths=PackedStringArray("_map")]
 script = ExtResource("3_54nnu")
@@ -174,6 +175,12 @@ position = Vector2(463.00003, 592)
 scale = Vector2(1.35, 1.35)
 texture = ExtResource("1_m34n8")
 centered = false
+
+[node name="NumBlocksHotbar" type="Node2D" parent="CanvasLayer" unique_id=1146561753]
+position = Vector2(462, 595)
+script = ExtResource("8_5ldmc")
+fontSize = 9
+isHotbar = true
 
 [node name="Sprite2D" type="Sprite2D" parent="CanvasLayer" unique_id=326292714]
 position = Vector2(462.99997, 592)
