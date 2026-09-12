@@ -31,8 +31,10 @@ folder_colors={
 "res://Asset/Enemys/": "red",
 "res://Asset/Inventory/": "gray",
 "res://Asset/Player/": "green",
+"res://Objects/Iventory/DropBlock/": "purple",
 "res://Objects/Iventory/Hotbar/": "red",
-"res://Objects/Iventory/Inventory/": "blue"
+"res://Objects/Iventory/Inventory/": "blue",
+"res://Objects/Iventory/NumBlock/": "green"
 }
 
 [navigation]
