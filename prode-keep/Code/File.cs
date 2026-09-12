@@ -20,8 +20,8 @@ public class FileGame
 	private static readonly byte[] Key = Encoding.UTF8.GetBytes("Rkwpfkstekstj284"); // 16 байт для AES-128
 	private static readonly byte[] IV = Encoding.UTF8.GetBytes("MksyEJ4936205739");   // 16 байт
 
-	private static int xW = Storage.WightInventory; 
-	private static int yH = Storage.HightInventory;
+	private static int xW = StorageInventory.WightInventory; 
+	private static int yH = StorageInventory.HightInventory;
 
 	// Получаем все доступные блоки (кроме Air и Null)
 	private static List<BlockId> availableBlocks = new List<BlockId>
@@ -109,8 +109,8 @@ public class FileGame
 
 			Seed = Storage.playerData.Seed,
 
-			Inventory = Storage.ListBlocksInventory,
-			Hotbar = Storage.ListBlocksHotbar,
+			Inventory = StorageInventory.ListBlocksInventory,
+			Hotbar = StorageInventory.ListBlocksHotbar,
 		};
 
 		Save(playerData, folderName, playerDataFile);

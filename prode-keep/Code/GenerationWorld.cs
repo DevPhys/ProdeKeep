@@ -71,7 +71,7 @@ public class Generation
 	{
 		seed = Storage.playerData.Seed;
 
-		additionalGeneration = new AdditionalGeneration(worldSizeBlocks);
+		additionalGeneration = new AdditionalGeneration(worldSizeBlocks, seed);
 		NoiseMapGenerator mapGenerator = new NoiseMapGenerator(additionalGeneration, seed);
 
 		listTreesOaks = mapGenerator.ListTreesOaks;
@@ -489,9 +489,9 @@ public class Generation
 	}
 }
 
-public class AdditionalGeneration (int WorldSizeBlocks = 1000)
+public class AdditionalGeneration (int WorldSizeBlocks = 1000, string Seed = "")
 {
-	string seed;
+	string seed = Seed;
 	Noise noise = new Noise();
 
 	public string GenerationSeed(int Length = 9)
@@ -499,9 +499,9 @@ public class AdditionalGeneration (int WorldSizeBlocks = 1000)
 		// Запуск цикла генерации сида
 		System.Random random = new System.Random();
 		System.Text.StringBuilder sb = new System.Text.StringBuilder();
-		for (int i = 0; i < 10; i++)
+		for (int i = 0; i < Length; i++)
 		{
-			sb.Append(random.Next(0, Length));
+			sb.Append(random.Next(0, 10));
 		}
 		seed = sb.ToString(); // Присвоение сида
 

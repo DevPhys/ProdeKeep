@@ -56,14 +56,6 @@ public class Storage
 	public static int ChunkW = 25;  // Длина 1 чанка
 	public static int TileSize = 16;  // Размер 1 блока
 
-	public static int BiasXInventory = 13;
-	public static int BiasYInventory = 9;
-	public static int HightInventory = 8;
-	public static int WightInventory = 20;
-
-	public static int BiasXHotbar = 18;
-	public static int BiasYHotbar = 23;
-
 	public static HashSet<int> TransparentBlocks = new HashSet<int> {
 			(int)BlockId.Air,
 			(int)BlockId.Water,
@@ -113,9 +105,6 @@ public class Storage
 		{ (int)BlockId.DryBush, "Dry Bush" },
 		{ (int)BlockId.Torch, "Torch" },
 	};
-
-	public static List<(int IdBlock, int NumBlocks)> ListBlocksInventory = new List<(int IdBlock, int NumBlocks)>();
-	public static List<(int IdBlock, int NumBlocks)> ListBlocksHotbar = new List<(int IdBlock, int NumBlocks)>();
 
 	public static List<ChunkKey> SaveChunks = new List<ChunkKey>();
 	public static ConcurrentDictionary<ChunkKey, byte[]> WorldMemory = new ConcurrentDictionary<ChunkKey, byte[]>();

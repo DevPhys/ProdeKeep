@@ -1,32 +1,24 @@
 using Godot;
 using System.Collections.Generic;
 using System;
-using System.Collections.Concurrent;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using System.Text.Json;
 
 public static class LoadAndSave
 {
 	public static void Load()
 	{
 		List<ChunkKey> chunks = FileGame.GetAllSavedChunks();
-		for (int i = 0; i < chunks.Count; i++)
-		{
-			byte[] chunk = FileGame.LoadChunk(chunks[i]);
+        foreach (var key in FileGame.GetAllSavedChunks())
+        {
+            byte[] chunk = FileGame.LoadChunk(key);
+            if (chunk is not null)
+                Storage.WorldMemory[key] = chunk;
+        }
 
-			if (chunk != null)
-				Storage.WorldMemory[chunks[i]] = chunk;
-		}
-
-		PlayerData playerData = FileGame.LoadData();
+        PlayerData playerData = FileGame.LoadData();
 		Storage.playerData = playerData;
 
-		Storage.ListBlocksInventory = playerData.Inventory;
-		Storage.ListBlocksHotbar = playerData.Hotbar;
+        StorageInventory.ListBlocksInventory = playerData.Inventory;
+        StorageInventory.ListBlocksHotbar = playerData.Hotbar;
 	}
 
 	public static void Save(Vector2 Position)
