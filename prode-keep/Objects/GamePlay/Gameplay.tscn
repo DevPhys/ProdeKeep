@@ -7,7 +7,7 @@
 [ext_resource type="Script" uid="uid://c10glhw1qqnpd" path="res://Objects/Player/CameraPlayer.cs" id="4_q4i2k"]
 [ext_resource type="PackedScene" uid="uid://bldw34pc1oqmx" path="res://Objects/Player/Player.tscn" id="5_q4i2k"]
 [ext_resource type="Script" uid="uid://c4oeqxn2gnpru" path="res://Objects/FPS/FpsCounter.cs" id="6_4i1n7"]
-[ext_resource type="PackedScene" uid="uid://dno4u54506e4h" path="res://Objects/Iventory/DropBlock.tscn" id="6_exco4"]
+[ext_resource type="PackedScene" uid="uid://dno4u54506e4h" path="res://Objects/Iventory/DropBlock/DropBlock.tscn" id="6_exco4"]
 [ext_resource type="PackedScene" uid="uid://cg1tuqn7y6ta2" path="res://Objects/Iventory/Iventory.tscn" id="7_jrgi8"]
 [ext_resource type="Script" uid="uid://b3uyfonhfw5gp" path="res://Objects/GamePlay/Clue.cs" id="9_pjgq7"]
 

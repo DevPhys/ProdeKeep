@@ -10,8 +10,9 @@
 [ext_resource type="Texture2D" uid="uid://dqfvdfgrqnd28" path="res://Asset/Inventory/Указатель.png" id="5_nbary"]
 [ext_resource type="Script" uid="uid://e6b71rtna3b4" path="res://Objects/Iventory/Inventory/BlockMous.cs" id="6_3pj0a"]
 [ext_resource type="Script" uid="uid://dc04elvq6ip8c" path="res://Objects/Iventory/Hotbar/NameBlock.cs" id="6_8f8o6"]
-[ext_resource type="Script" uid="uid://8iducr7u3vv5" path="res://Objects/Iventory/NumBlocks.cs" id="8_5ldmc"]
-[ext_resource type="Script" uid="uid://cjqg73al43mub" path="res://Objects/Iventory/NumBlockMous.cs" id="12_0nsg8"]
+[ext_resource type="Script" uid="uid://3a28fm8e2f05" path="res://Objects/Iventory/NumBlock/NumBlocks.cs" id="8_5ldmc"]
+[ext_resource type="Script" uid="uid://cjqg73al43mub" path="res://Objects/Iventory/NumBlock/NumBlockMous.cs" id="12_0nsg8"]
+[ext_resource type="Texture2D" uid="uid://dlq5u0ibpsnpe" path="res://Asset/Inventory/bg_inventory.png" id="13_4x267"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_8f8o6"]
 
@@ -78,14 +79,28 @@ _nameBlock = NodePath("../CanvasLayer/NameBlock")
 script = ExtResource("3_54nnu")
 _map = NodePath("../CanvasLayer/Inventory")
 
-[node name="InventoryDraw" type="Node" parent="." unique_id=74656382 node_paths=PackedStringArray("_map", "_texture1", "_texture2")]
+[node name="InventoryDraw" type="Node" parent="." unique_id=74656382 node_paths=PackedStringArray("_map", "_texture1", "_texture2", "_textureBg")]
 script = ExtResource("2_q4s7b")
 _map = NodePath("../CanvasLayer/Inventory")
 _texture1 = NodePath("../CanvasLayer/InventoryTexture")
 _texture2 = NodePath("../CanvasLayer/InventoryTexture2")
-_textureBg = ExtResource("4_7ks7l")
+_textureRecovery = ExtResource("4_7ks7l")
+_textureBg = NodePath("../CanvasLayer/BgInventory")
+_textureBgRecovery = ExtResource("13_4x267")
 
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1904974252]
+
+[node name="BgHotbar" type="Sprite2D" parent="CanvasLayer" unique_id=606100207]
+position = Vector2(463, 592)
+scale = Vector2(8.965517, 1.35)
+texture = ExtResource("13_4x267")
+centered = false
+
+[node name="BgInventory" type="Sprite2D" parent="CanvasLayer" unique_id=63338569]
+position = Vector2(337, 234)
+scale = Vector2(17.689655, 10.2)
+texture = ExtResource("13_4x267")
+centered = false
 
 [node name="NameBlock" type="Label" parent="CanvasLayer" unique_id=1006000740]
 offset_left = 729.0
@@ -177,7 +192,7 @@ texture = ExtResource("1_m34n8")
 centered = false
 
 [node name="NumBlocksHotbar" type="Node2D" parent="CanvasLayer" unique_id=1146561753]
-position = Vector2(462, 595)
+position = Vector2(458, 597)
 script = ExtResource("8_5ldmc")
 fontSize = 9
 isHotbar = true

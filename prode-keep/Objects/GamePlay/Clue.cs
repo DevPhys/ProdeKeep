@@ -1,60 +1,54 @@
 using Godot;
-using System;
 
 public partial class Clue : Label
 {
-	bool isInventory;
-	bool isClue = false;
-
-	string clueGame = "" +
+	private const string ClueGame =
 		"E - open/close inventory\n" +
 		"A - running left\n" +
 		"D - running right\n" +
 		"W - Jump\n" +
-		"ESC / Сross / Alt + F4 - exit\n" +
+		"ESC / Cross / Alt + F4 - exit\n" +
 		"Wheel scroll / keys 1-9 - \n" +
 		"replacing a block in the \n" +
 		"Hotbar\n\n" +
 		"RMB - place a block" +
 		"\nLMB - destroy the block";
-	string clueInventory = "" +
+
+	private const string ClueInventory =
 		"RMB - replace a block\n" +
 		"in the Hotbar / \n" +
 		"select a block\n" +
 		"in the inventory";
 
+	private bool _lastInventoryMode;
 
-	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
 		Visible = false;
+		_lastInventoryMode = Gameplayer.isInventory;
 	}
 
-	public override void _Input(InputEvent ev)
+	public override void _UnhandledInput(InputEvent ev)
 	{
-		if (ev is InputEventKey keyEvent && keyEvent.Pressed)
+		if (ev is not InputEventKey keyEvent || !keyEvent.Pressed) return;
+
+		// Переключение подсказки
+		if (keyEvent.Keycode == Key.V)
 		{
-			isInventory = Gameplayer.isInventory;
+			Visible = !Visible;
+			_lastInventoryMode = Gameplayer.isInventory;
 
-			if (keyEvent.Keycode == Key.V && !isClue)
-			{
-				if (isInventory)
-				{
-					Text = clueInventory;
-				}
-				else if (!isInventory) 
-				{
-					Text = clueGame;
-				}
+			if (Visible)
+				Text = _lastInventoryMode ? ClueInventory : ClueGame;
 
-				Visible = true;
-				isClue = true;
-			}
-			else if (keyEvent.Keycode == Key.V && isClue)
-			{
-				Visible = false;
-				isClue = false;
-			}
+			return;
+		}
+
+		// Если подсказка видна и режим сменился — обновляем текст
+		if (Visible && _lastInventoryMode != Gameplayer.isInventory)
+		{
+			_lastInventoryMode = Gameplayer.isInventory;
+			Text = _lastInventoryMode ? ClueInventory : ClueGame;
 		}
 	}
 }

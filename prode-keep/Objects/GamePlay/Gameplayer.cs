@@ -1,35 +1,29 @@
 using Godot;
-using System.Collections.Generic;
-using System;
-using System.Collections.Concurrent;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 public partial class Gameplayer : Node2D  // Корневой узел сцены
 {
 	[Export] public Player _player;
 
-	[Export] public int _fpsLimit = 60;
-	[Export] public bool _isDisplayServer = false;
+	[Export] public int _maxFps = 60;
+	[Export] public bool _disableVsync = false;
 
 	public static bool isInventory = false;
 
 	public override void _Ready()
 	{
-		if (_isDisplayServer)
+		if (_disableVsync)
 			DisplayServer.WindowSetVsyncMode(DisplayServer.VSyncMode.Disabled);
-		Engine.MaxFps = _fpsLimit;
+
+		Engine.MaxFps = Mathf.Max(0, _maxFps);
 	}
 
 	// Этот метод автоматически вызывается для необработанных событий ввода
 	public override void _UnhandledInput(InputEvent @event)
 	{
-		if (@event is InputEventKey eventKey && eventKey.Pressed)
+		if (@event is InputEventKey keyEvent && keyEvent.Pressed)
 		{
-			bool isEscape = eventKey.Keycode == Key.Escape;
-			bool isAltF4 = eventKey.Keycode == Key.F4 && eventKey.AltPressed;
+			bool isEscape = keyEvent.Keycode == Key.Escape;
+			bool isAltF4 = keyEvent.Keycode == Key.F4 && keyEvent.AltPressed;
 
 			if (isEscape || isAltF4)
 			{
@@ -38,6 +32,7 @@ public partial class Gameplayer : Node2D  // Корневой узел сцен�
 			}
 		}
 	}
+
 	public override void _Notification(int what)
 	{
 		if (what == NotificationWMCloseRequest)
@@ -45,9 +40,14 @@ public partial class Gameplayer : Node2D  // Корневой узел сцен�
 			ExitGame();
 		}
 	}
+
 	private void ExitGame()
 	{
-		LoadAndSave.Save(_player.GlobalPosition);
+		if (_player is not null)
+			LoadAndSave.Save(_player.GlobalPosition);
+		else
+			GD.PushError("ExitGame: _player не назначен, позиция игрока не сохранена");
+
 		GetTree().Quit();
 	}
 
@@ -62,7 +62,7 @@ public partial class Gameplayer : Node2D  // Корневой узел сцен�
 				isInventory = true;
 			}
 
-			// Клавиша E/Escape - закрыть инвентарь
+			// Клавиша E - закрыть инвентарь
 			else if (keyEvent.Keycode == Key.E && isInventory)
 			{
 				Input.MouseMode = Input.MouseModeEnum.Hidden;

@@ -6,29 +6,37 @@ public partial class InventoryDraw : Node
 	bool oldIsInventory = false;
 	bool isInventory = Gameplayer.isInventory;
 
-	[Export] public TileMapLayer _map;
-	[Export] public Sprite2D _texture1;
+    [ExportGroup("Map")]
+    [Export] public TileMapLayer _map;
+
+    [ExportGroup("Textuire Inventory")]
+    [Export] public Sprite2D _texture1;
 	[Export] public Sprite2D _texture2;
-	[Export] public Texture2D _textureBg;
+	[Export] public Texture2D _textureRecovery;
 
-	List<(int IdBlock, int NumBloks)> listBlocksInventory = Storage.ListBlocksInventory;
+    [ExportGroup("Textuire Bg Inventory")]
+    [Export] public Sprite2D _textureBg;
+    [Export] public Texture2D _textureBgRecovery;
 
-	int biasX = Storage.BiasXInventory;
-	int biasY = Storage.BiasYInventory;
+    List<(int IdBlock, int NumBloks)> listBlocksInventory = StorageInventory.ListBlocksInventory;
 
-	int xW = Storage.WightInventory; 
-	int yH = Storage.HightInventory;
+	int biasX = StorageInventory.BiasXInventory;
+	int biasY = StorageInventory.BiasYInventory;
+
+	int xW = StorageInventory.WightInventory; 
+	int yH = StorageInventory.HightInventory;
 
 	public override void _Ready()
 	{
 		_texture1.Texture = null;
 		_texture2.Texture = null;
+		_textureBg.Texture = null;
 	}
 
 	public override void _Process(double delta)
 	{
 		isInventory = Gameplayer.isInventory;
-		listBlocksInventory = Storage.ListBlocksInventory;
+		listBlocksInventory = StorageInventory.ListBlocksInventory;
 
 		if (isInventory != oldIsInventory)
 		{
@@ -41,8 +49,8 @@ public partial class InventoryDraw : Node
 		if (ReplacementBlocks.redrawing)
 			Draw();
 
-		oldIsInventory = Gameplayer.isInventory;
-	}
+        oldIsInventory = isInventory;
+    }
 
 	private void Draw()
 	{
@@ -55,9 +63,10 @@ public partial class InventoryDraw : Node
 			}
 		}
 
-		_texture1.Texture = _textureBg;
-		_texture2.Texture = _textureBg;
-	}
+		_texture1.Texture = _textureRecovery;
+		_texture2.Texture = _textureRecovery;
+		_textureBg.Texture = _textureBgRecovery;
+    }
 	private void Delete()
 	{
 		for (int x = 0; x < xW; x++)
@@ -71,5 +80,6 @@ public partial class InventoryDraw : Node
 
 		_texture1.Texture = null;
 		_texture2.Texture = null;
-	}
+        _textureBg.Texture = null;
+    }
 }

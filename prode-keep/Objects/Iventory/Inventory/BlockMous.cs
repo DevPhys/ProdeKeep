@@ -9,7 +9,7 @@ public partial class BlockMous : Sprite2D
 	{
 		Vector2 targetPosition = GetGlobalMousePosition();
 
-		// Сглаживание с учётом delta (не зависит от FPS)
-		GlobalPosition = GlobalPosition.Lerp(targetPosition, _smoothSpeed * (float)delta);
-	}
+        float t = 1f - Mathf.Exp(-_smoothSpeed * (float)delta);
+        GlobalPosition = GlobalPosition.Lerp(targetPosition, t);
+    }
 }

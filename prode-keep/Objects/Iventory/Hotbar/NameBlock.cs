@@ -1,29 +1,21 @@
 using Godot;
 using System.Collections.Generic;
-using System;
-using System.Collections.Concurrent;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 
 public partial class NameBlock : Label
 {
-	int currentBlock;
-	Dictionary<int, string> nameBlocks = Storage.NameBlocks;
+    private static readonly Dictionary<int, string> NameBlocks = Storage.NameBlocks;
 
-	string oldtext = "";
-	string text = "";
+    private string _shown = "";
 
-	public override void _Process(double delta)
-	{
-		currentBlock = HotbarPointer.currentBlock;
-		text = nameBlocks[currentBlock];
+    public override void _Process(double delta)
+    {
+        if (!NameBlocks.TryGetValue(HotbarPointer.currentBlock, out string name))
+            name = "";
 
-		if (text != oldtext)
-			Text = text;
+        if (name == _shown)
+            return;
 
-		oldtext = text;
-	}
+        Text = name;
+        _shown = name;
+    }
 }

@@ -20,7 +20,8 @@ public partial class CameraPlayer : Camera2D
 	{
 		if (_player == null) return;
 
-		// Lerp + округление
-		Position = Position.Lerp(_player.GlobalPosition, _followSpeed * (float)delta).Round();
+		// Экспоненциальное сглаживание — не зависит от FPS
+		float t = 1f - Mathf.Exp(-_followSpeed * (float)delta);
+		Position = Position.Lerp(_player.GlobalPosition, t).Round();
 	}
 }

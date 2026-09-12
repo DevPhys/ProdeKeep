@@ -1,76 +1,120 @@
 using Godot;
+
+using Godot;
 using System;
 
 using BlockId = Storage.BlockId;
 
 public partial class ReplacementBlocks : Node
 {
-	[Export] public TileMapLayer _map;
-	[Export] public Sprite2D _block;
-	[Export] public Label _numBlock;
+    [Export] public TileMapLayer _map;
+    [Export] public Sprite2D _block;
+    [Export] public Label _numBlock;
     [Export] public Label _nameBlock;
 
-    [Export] public int startXInventory = 13;
-	[Export] public int endXInventory = 33;
-	[Export] public int startYInventory = 9;
-	[Export] public int endYInventory = 17;
+    [Export] public int startXInventory = InventoryLayout.InvStartX;
+    [Export] public int endXInventory = InventoryLayout.InvEndX;
+    [Export] public int startYInventory = InventoryLayout.InvStartY;
+    [Export] public int endYInventory = InventoryLayout.InvEndY;
 
-	[Export] public int startXHotbar = 18;
-	[Export] public int endXHotbar = 28;
-	[Export] public int yHotbar = 23;
+    [Export] public int startXHotbar = InventoryLayout.HotStartX;
+    [Export] public int endXHotbar = InventoryLayout.HotEndX;
+    [Export] public int yHotbar = InventoryLayout.HotY;
 
-	int idBlock; int numBlocks;
+    int idBlock;
+    int numBlocks;
 
-	int biasX = Storage.BiasXInventory; 
-	int biasY = Storage.BiasYInventory;
-	int hightInventory = Storage.HightInventory;
+    int biasX = StorageInventory.BiasXInventory;
+    int biasY = StorageInventory.BiasYInventory;
+    int hightInventory = StorageInventory.HightInventory;
 
-	public static bool redrawing = false;
+    public static bool redrawing = false;
 
-	int timeRedrawing = 2;
-	int storageDevice = 0;
+    int timeRedrawing = 2;
+    int storageDevice = 0;
 
-	Vector2I tileCoordsOld;
+    Vector2I tileCoordsOld;
 
-	public override void _Process(double delta)
-	{
-        for (int i = 0; i < Storage.ListBlocksHotbar.Count; i++)
+    public override void _Process(double delta)
+    {
+        if (redrawing)
         {
-            if (Storage.ListBlocksHotbar[i].NumBlocks <= 0 && Storage.ListBlocksHotbar[i].IdBlock != (int)BlockId.Null)
-			{
-				Storage.ListBlocksHotbar[i] = ((int)BlockId.Null, 0);
-				_nameBlock.Text = "";
+            for (int i = 0; i < StorageInventory.ListBlocksHotbar.Count; i++)
+            {
+                var slot = StorageInventory.ListBlocksHotbar[i];
+                if (slot.NumBlocks <= 0 && slot.IdBlock != (int)BlockId.Null)
+                    StorageInventory.ListBlocksHotbar[i] = ((int)BlockId.Null, 0);
+            }
+
+            if (storageDevice >= timeRedrawing)
+            {
+                redrawing = false;
+                storageDevice = 0;
+            }
+            else
+            {
+                storageDevice++;
             }
         }
+    }
 
-        if (!redrawing) return;
+    public override void _Input(InputEvent @event)
+    {
+        if (@event is not InputEventMouseButton mouseButton ||
+            !mouseButton.Pressed ||
+            !Gameplayer.isInventory)
+            return;
 
-		if (storageDevice == timeRedrawing)
-			redrawing = false;
-		else
-			storageDevice++;
-	}
+        Vector2 mouseScreenPos = GetViewport().GetMousePosition();
+        Vector2I tileCoords = _map.LocalToMap(_map.ToLocal(mouseScreenPos));
 
-	public override void _Input(InputEvent @event)
-	{
-		if (@event is InputEventMouseButton mouseButton && mouseButton.Pressed && Gameplayer.isInventory)
-		{
-			Vector2 mouseScreenPos = GetViewport().GetMousePosition();
-			Vector2I tileCoords = _map.LocalToMap(_map.ToLocal(mouseScreenPos));
+        if (mouseButton.ButtonIndex == MouseButton.Left && _block.Texture == null)
+        {
+            var main = TileTextureReader.Read(_map, tileCoords);
 
-			if (mouseButton.ButtonIndex == MouseButton.Left && _block.Texture == null)
-			{
-				var main = GetTextureAtCell(tileCoords);
+            if (main.BlockId == (int)BlockId.Null)
+            {
+                _block.Texture = null;
+                idBlock = (int)BlockId.Null;
+                return;
+            }
 
-				if (main.blockId == (int)BlockId.Null)
-				{
-					_block.Texture = null;
-					idBlock = (int)BlockId.Null;
+            bool bl = Re_recording(tileCoords, (int)BlockId.Null, 0);
+            if (!bl)
+            {
+                _block.Texture = null;
+                idBlock = (int)BlockId.Null;
+                _numBlock.Text = "";
+            }
 
-					return; // клик по пустой клетке
-				}
+            redrawing = true;
+            storageDevice = 0;
 
-				bool bl = Re_recording(tileCoords, (int)BlockId.Null, 0);
+            _block.Texture = main.Texture;
+            if (numBlocks > 1)
+                _numBlock.Text = $"{numBlocks}";
+            idBlock = main.BlockId;
+
+            tileCoordsOld = tileCoords;
+        }
+        else if (mouseButton.ButtonIndex == MouseButton.Left && _block.Texture != null)
+        {
+            Vector2I atlasCoords = _map.GetCellAtlasCoords(tileCoords);
+            int blockId = atlasCoords.Y * TileTextureReader.AtlasColumns + atlasCoords.X;
+
+            if (blockId == (int)BlockId.Null)
+            {
+                Re_recording(tileCoords, idBlock, numBlocks);
+
+                _block.Texture = null;
+                _numBlock.Text = "";
+                idBlock = (int)BlockId.Null;
+            }
+            else
+            {
+                var main = TileTextureReader.Read(_map, tileCoords);
+                bool bl = Re_recording(tileCoords, idBlock, numBlocks);
+
                 if (!bl)
                 {
                     _block.Texture = null;
@@ -78,116 +122,121 @@ public partial class ReplacementBlocks : Node
                     _numBlock.Text = "";
                 }
 
-                redrawing = true;
-				storageDevice = 0;
+                _block.Texture = main.Texture;
+                if (numBlocks > 1)
+                    _numBlock.Text = $"{numBlocks}";
+                idBlock = main.BlockId;
+            }
 
-				_block.Texture = main.Texture;
-				if (numBlocks > 1)
-					_numBlock.Text = $"{numBlocks}";
-				idBlock = main.blockId;
+            redrawing = true;
+            storageDevice = 0;
+        }
+    }
 
-				tileCoordsOld = tileCoords;
-			}
+    private bool Re_recording(Vector2I cellCoords, int blockId, int num)
+    {
+        if (InventorySlotGrid.IsInventoryCell(
+                cellCoords,
+                startXInventory, endXInventory,
+                startYInventory, endYInventory))
+        {
+            int index = InventorySlotGrid.InventoryIndex(
+                cellCoords, biasX, biasY, hightInventory);
 
-			else if (mouseButton.ButtonIndex == MouseButton.Left && _block.Texture != null)
-			{
-				Vector2I atlasCoords = _map.GetCellAtlasCoords(tileCoords);
-				int blockId = atlasCoords.Y * 10 + atlasCoords.X;
+            numBlocks = StorageInventory.ListBlocksInventory[index].NumBlocks;
 
-				if (blockId == (int)BlockId.Null)
-				{
-					Re_recording(tileCoords, idBlock, numBlocks);
+            (int IdBlock, int NumBloks) mainBlock = (blockId, num);
+            StorageInventory.ListBlocksInventory[index] = mainBlock;
 
-					_block.Texture = null;
-					_numBlock.Text = "";
-					idBlock = (int)BlockId.Null;
-				}
-				else
-				{
-					var main = GetTextureAtCell(tileCoords);
-					bool bl = Re_recording(tileCoords, idBlock, numBlocks);
+            return true;
+        }
+        else if (InventorySlotGrid.IsHotbarCell(
+                     cellCoords,
+                     startXHotbar, endXHotbar,
+                     yHotbar))
+        {
+            int index = InventorySlotGrid.HotbarIndex(cellCoords, startXHotbar);
 
-					if (!bl)
-					{
-                        _block.Texture = null;
-                        idBlock = (int)BlockId.Null;
-                        _numBlock.Text = "";
-                    }
+            numBlocks = StorageInventory.ListBlocksHotbar[index].NumBlocks;
 
-					_block.Texture = main.Texture;
-					if (numBlocks > 1)
-						_numBlock.Text = $"{numBlocks}";
-					idBlock = main.blockId;
-				}
+            (int IdBlock, int NumBloks) mainBlock = (blockId, num);
+            StorageInventory.ListBlocksHotbar[index] = mainBlock;
+            HotbarPointer.currentBlock = StorageInventory.ListBlocksHotbar[HotbarPointer.currentIndex].IdBlock;
 
-				redrawing = true;
-				storageDevice = 0;
-			}
-		}
-	}
+            return true;
+        }
 
-	private (Texture2D Texture, int blockId) GetTextureAtCell(Vector2I cellCoords)
-	{
-		TileData tileData = _map.GetCellTileData(cellCoords);
+        numBlocks = 0;
+        return false;
+    }
+}
 
-		if (tileData == null) return (null, (int)BlockId.Null);
+public static class TileTextureReader
+{
+    public const int AtlasColumns = 10;
 
-		int sourceId = _map.GetCellSourceId(cellCoords);
-		if (sourceId == (int)BlockId.Null) return (null, (int)BlockId.Null);
+    /// <summary>
+    /// Возвращает текстуру и id блока для клетки тайлмапа.
+    /// (null, Null) — если клетка пуста или тайлсет не AtlasSource.
+    /// </summary>
+    public static (Texture2D Texture, int BlockId) Read(TileMapLayer map, Vector2I cell)
+    {
+        TileData tileData = map.GetCellTileData(cell);
+        if (tileData == null)
+            return (null, (int)Storage.BlockId.Null);
 
-		TileSetSource source = _map.TileSet.GetSource(sourceId);
+        int sourceId = map.GetCellSourceId(cell);
+        if (sourceId == (int)Storage.BlockId.Null)
+            return (null, (int)Storage.BlockId.Null);
 
-		if (source is TileSetAtlasSource atlasSource)
-		{
-			Vector2I atlasCoords = _map.GetCellAtlasCoords(cellCoords);
+        if (map.TileSet.GetSource(sourceId) is TileSetAtlasSource atlasSource)
+        {
+            Vector2I atlasCoords = map.GetCellAtlasCoords(cell);
+            Rect2I region = atlasSource.GetTileTextureRegion(atlasCoords);
 
-			// Получаем регион в атласе (Rect2I)
-			Rect2I region = atlasSource.GetTileTextureRegion(atlasCoords);
+            var tex = new AtlasTexture
+            {
+                Atlas = atlasSource.Texture,
+                Region = region
+            };
 
-			// Создаем AtlasTexture с нужным регионом
-			AtlasTexture atlasTexture = new AtlasTexture();
-			atlasTexture.Atlas = atlasSource.Texture;
-			atlasTexture.Region = region;
+            int blockId = atlasCoords.Y * AtlasColumns + atlasCoords.X;
+            return (tex, blockId);
+        }
 
-			int blockId = atlasCoords.Y * 10 + atlasCoords.X;
-			return (atlasTexture, blockId);
-		}
+        return (null, (int)Storage.BlockId.Null);
+    }
+}
 
-		return (null, (int)BlockId.Null);
-	}
-	private bool Re_recording(Vector2I cellCoords, int BlockId, int NumBlocks)
-	{
-		int localX = cellCoords.X;
-		int localY = cellCoords.Y;
+public static class InventoryLayout
+{
+    // Инвентарь
+    public const int InvStartX = 13;
+    public const int InvEndX = 33;
+    public const int InvStartY = 9;
+    public const int InvEndY = 17;
 
-		if (localX >= startXInventory &&
-			localX <= endXInventory &&
-			localY >= startYInventory &&
-			localY <= endYInventory)
-		{
-			int index = (localX - biasX) * hightInventory + (localY - biasY);
-			numBlocks = Storage.ListBlocksInventory[index].NumBlocks;
+    // Хотбар
+    public const int HotStartX = 18;
+    public const int HotEndX = 28;
+    public const int HotY = 23;
 
-			(int IdBlock, int NumBloks) mainBlock = (BlockId, NumBlocks);
-			Storage.ListBlocksInventory[index] = mainBlock;
+    public const int HotbarSlots = 10;
+    public const int AtlasColumns = 10;
+}
 
-			return true;
-		}
-		else if (localX >= startXHotbar &&
-				 localX <= endXHotbar &&
-				 localY == yHotbar)
-		{
-			int index = localX - startXHotbar;
-			numBlocks = Storage.ListBlocksHotbar[index].NumBlocks;
+public static class InventorySlotGrid
+{
+    public static bool IsInventoryCell(Vector2I cell, int startX, int endX, int startY, int endY)
+        => cell.X >= startX && cell.X <= endX &&
+           cell.Y >= startY && cell.Y <= endY;
 
-			(int IdBlock, int NumBloks) mainBlock = (BlockId, NumBlocks);
-			Storage.ListBlocksHotbar[index] = mainBlock;
-			HotbarPointer.currentBlock = Storage.ListBlocksHotbar[HotbarPointer.currentIndex].IdBlock;
+    public static bool IsHotbarCell(Vector2I cell, int startX, int endX, int y)
+        => cell.X >= startX && cell.X <= endX && cell.Y == y;
 
-			return true;
-		}
+    public static int InventoryIndex(Vector2I cell, int biasX, int biasY, int height)
+        => (cell.X - biasX) * height + (cell.Y - biasY);
 
-		numBlocks = 0;
-		return false;
-	}
+    public static int HotbarIndex(Vector2I cell, int startX)
+        => cell.X - startX;
 }
